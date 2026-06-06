@@ -4,7 +4,10 @@ const GLPI_URL = 'http://localhost:8081/api.php/v2'
 const CLIENT_ID = '8e5643c893eb080174bf7f11817f5ead61942c94a76d0f9fd57b42f19d1ee197'
 const CLIENT_SECRET = 'bb456712151222f6921b8ebf53266758ddf17150947cfc584d8a0818602858f6'
 
-const api = axios.create({
+const LEGACY_URL = 'http://localhost:8081/apirest.php'
+const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
+
+ export const api = axios.create({
   baseURL: GLPI_URL,
   headers: {
     'Content-Type': 'application/json'
@@ -19,6 +22,17 @@ api.interceptors.request.use(config => {
   }
   return config
 })
+
+// Initialiser session legacy
+export const initLegacySession = async () => {
+  const response = await axios.get(`${LEGACY_URL}/initSession`, {
+    headers: {
+      'Authorization': 'Basic Z2xwaTpnbHBp',
+      'App-Token': APP_TOKEN
+    }
+  })
+  return response.data.session_token
+}
 
 export const login = async (username, password) => {
   const response = await axios.post('http://localhost:8081/api.php/token', {
@@ -87,6 +101,25 @@ export const countElements = async (href) => {
 export const getItems = async(href) => {
   const response = await api.get(`${href}`);
   return response.data;
+}
+
+// Associer un élément à un ticket
+export const associerElementTicket = async (ticketId, itemtype, itemId) => {
+  const sessionToken = await initLegacySession()
+  const response = await axios.post(`${LEGACY_URL}/Item_Ticket`, {
+    input: {
+      tickets_id: ticketId,
+      itemtype: itemtype,
+      items_id: itemId
+    }
+  }, {
+    headers: {
+      'Session-Token': sessionToken,
+      'App-Token': APP_TOKEN,
+      'Content-Type': 'application/json'
+    }
+  })
+  return response.data
 }
 
 export default api

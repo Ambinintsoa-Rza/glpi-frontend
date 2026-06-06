@@ -3,8 +3,9 @@ import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import ImportView from '../views/ImportView.vue'
 import UserView from '@/views/UserView.vue'
-import TicketCreate from '@/views/TicketCreate.vue'
+import TicketListView from '@/views/TicketListView.vue'
 import FrontHomeView from '@/views/frontoffice/FrontHomeView.vue'
+import TicketCreateView from '@/views/frontoffice/TicketCreateView.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -25,10 +26,10 @@ const routes = [
     component: UserView,
     meta: { requiresAuth: true }
   },
-  //nouveau ticket
+  //liste ticket
   {
-    path: '/ticketCreate',
-    component: TicketCreate,
+    path: '/ticketList',
+    component: TicketListView,
     meta: { requiresAuth: true }
   },
 
@@ -36,6 +37,11 @@ const routes = [
   {
     path: '/Front/Home',
     component: FrontHomeView
+  },
+  //creation ticket
+  {
+    path: '/Front/CreateTicket',
+    component: TicketCreateView
   }
 ]
 

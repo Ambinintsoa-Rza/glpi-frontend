@@ -34,5 +34,5 @@ onMounted(() => {
             </tr>
         </tbody>
     </table>
-    <router-link to="/ticketCreate">nouveau ticket</router-link>
+    <router-link to="/ticketList">Liste des tickets</router-link>
 </template>
