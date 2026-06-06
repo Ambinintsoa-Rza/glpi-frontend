@@ -66,4 +66,21 @@ export const supprimerTicket = async(id) => {
   return response.data; 
 }
 
+
+//recuperer les elements
+export const getElements = async() => {
+  const response = await api.get('/Assets');
+  return response.data;
+}
+
+export const countElements = async (href) => {
+  const response = await api.get(`${href}?limit=0`)
+  const contentRange = response.headers['content-range']
+  if (contentRange) {
+    const total = contentRange.split('/')[1]
+    return parseInt(total) || 0
+  }
+  return 0
+}
+
 export default api
