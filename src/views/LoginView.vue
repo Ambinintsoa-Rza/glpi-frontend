@@ -4,6 +4,7 @@
     <input v-model="username" placeholder="Identifiant" />
     <input v-model="password" type="password" placeholder="Mot de passe" />
     <button @click="handleLogin">Se connecter</button>
+    <router-link to="/Front/Home">Frontoffice</router-link>
     <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
