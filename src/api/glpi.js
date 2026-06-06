@@ -83,4 +83,10 @@ export const countElements = async (href) => {
   return 0
 }
 
+//recuperer avec parametre endpoint
+export const getItems = async(href) => {
+  const response = await api.get(`${href}`);
+  return response.data;
+}
+
 export default api

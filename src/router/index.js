@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue'
 import ImportView from '../views/ImportView.vue'
 import UserView from '@/views/UserView.vue'
 import TicketCreate from '@/views/TicketCreate.vue'
+import FrontHomeView from '@/views/frontoffice/FrontHomeView.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -29,6 +30,12 @@ const routes = [
     path: '/ticketCreate',
     component: TicketCreate,
     meta: { requiresAuth: true }
+  },
+
+  //frontoffice
+  {
+    path: '/Front/Home',
+    component: FrontHomeView
   }
 ]
 
