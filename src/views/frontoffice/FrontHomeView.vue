@@ -83,5 +83,6 @@ onMounted(async() => {
         </tr>
     </tbody>
 </table>
-
+<br>
+<router-link to="/Front/CreateTicket">Creer un ticket</router-link>
 </template>
