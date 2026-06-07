@@ -72,40 +72,291 @@ onMounted(() => {
 </script>
 
 <template>
-    <h2>nouveau ticket</h2>
-    <p><input v-model="formulaire.titre" type="text" placeholder="titre"></p>
-    <textarea v-model="formulaire.description" placeholder="description"></textarea>
-    <p><button @click="nouveauTicket">nouveau ticket</button></p>
-    <br>
-    <table border>
-    <thead>
-        <tr>
-            <th>Sélectionner</th>
-            <th>Type</th>
-            <th>Nom</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr v-for="el in elementsDisponibles" :key="`${el.type}-${el.id}`">
-            <td>
-                <input 
-                    type="checkbox"
-                    :checked="estSelectionne(el)"
-                    @change="toggleElement(el)"
-                />
-            </td>
-            <td>{{ el.type }}</td>
-            <td>{{ el.name }}</td>
-        </tr>
-    </tbody>
-</table>
+  <div class="ticket-page">
 
-<div v-if="elementsSelectionnes.length > 0">
-    <h4>Éléments sélectionnés :</h4>
-    <ul>
-        <li v-for="el in elementsSelectionnes" :key="`${el.type}-${el.id}`">
-            {{ el.type }} - {{ el.name }}
-        </li>
-    </ul>
-</div>
+    <div class="page-header">
+      <h1>Création d'un ticket</h1>
+      <p class="subtitle">
+        Déclarez un incident ou une demande et associez des équipements.
+      </p>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="card">
+      <div class="card-header">
+        <h3>🎫 Informations du ticket</h3>
+      </div>
+
+      <div class="card-body">
+
+        <div class="form-group">
+          <label>Titre</label>
+          <input
+            v-model="formulaire.titre"
+            type="text"
+            placeholder="Titre du ticket"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea
+            v-model="formulaire.description"
+            rows="5"
+            placeholder="Décrivez le problème ou la demande"
+          />
+        </div>
+
+        <button
+          class="btn-primary"
+          @click="nouveauTicket"
+        >
+          🎫 Créer le ticket
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Liste des éléments -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📦 Équipements disponibles</h3>
+
+        <span class="count-badge">
+          {{ elementsSelectionnes.length }} sélectionné(s)
+        </span>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Sélection</th>
+              <th>Type</th>
+              <th>Nom</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              v-for="el in elementsDisponibles"
+              :key="`${el.type}-${el.id}`"
+            >
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="estSelectionne(el)"
+                  @change="toggleElement(el)"
+                />
+              </td>
+
+              <td>
+                <span class="type-badge">
+                  {{ el.type }}
+                </span>
+              </td>
+
+              <td>{{ el.name }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Résumé -->
+    <div
+      v-if="elementsSelectionnes.length > 0"
+      class="card"
+    >
+      <div class="card-header">
+        <h3>✅ Éléments associés</h3>
+      </div>
+
+      <div class="card-body">
+        <ul class="selected-list">
+          <li
+            v-for="el in elementsSelectionnes"
+            :key="`${el.type}-${el.id}`"
+          >
+            <strong>{{ el.type }}</strong>
+            — {{ el.name }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
 </template>
+
+<style scoped>
+.ticket-page {
+  padding: 0;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e2a3a;
+}
+
+.subtitle {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e2a3a;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 3px rgba(74,158,255,0.15);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #1e2a3a;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-primary:hover {
+  background: #2d3f54;
+}
+
+.count-badge {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+th {
+  text-align: left;
+  padding: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+td {
+  padding: 14px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+}
+
+.type-badge {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.selected-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.selected-list li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+</style>
