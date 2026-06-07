@@ -1,22 +1,7 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
-import { newTicket, getTickets, supprimerTicket } from '@/api/glpi';
+import { onMounted, ref } from 'vue';
+import { getTickets, supprimerTicket } from '@/api/glpi';
 
-const formulaire = reactive({
-    titre:'',
-    description:''
-});
-
-//nouveau ticket
-const nouveauTicket = async() => {
-     try {
-        const ticket = await newTicket(formulaire.titre, formulaire.description);
-        await listeTicket();
-        console.log(ticket);
-     } catch (error) {
-        console.error(error);
-     }
-}
 
 //recuperer la liste des tickets
 const tickets = ref([]);
@@ -61,11 +46,6 @@ onMounted(() => {
 </script>
 
 <template>
-    <h2>nouveau ticket</h2>
-    <p><input v-model="formulaire.titre" type="text" placeholder="titre"></p>
-    <textarea v-model="formulaire.description" placeholder="description"></textarea>
-    <p><button @click="nouveauTicket">nouveau ticket</button></p>
-    <br>
     <h2>liste des tickets</h2>
     <table border>
         <thead>
