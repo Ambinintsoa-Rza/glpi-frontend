@@ -6,6 +6,7 @@ import UserView from '@/views/UserView.vue'
 import TicketListView from '@/views/TicketListView.vue'
 import FrontHomeView from '@/views/frontoffice/FrontHomeView.vue'
 import TicketCreateView from '@/views/frontoffice/TicketCreateView.vue'
+import ResetDataView from '@/views/ResetDataView.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -31,6 +32,18 @@ const routes = [
     path: '/ticketList',
     component: TicketListView,
     meta: { requiresAuth: true }
+  },
+  //reset data
+  {
+    path: '/reset-data',
+    component: ResetDataView,
+    meta : { requiresAuth: true }
+  },
+  //import data
+  {
+    path : '/import-data',
+    component: ImportView,
+    meta : { requiresAuth: true}
   },
 
   //frontoffice
