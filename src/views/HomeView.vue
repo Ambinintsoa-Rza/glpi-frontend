@@ -80,6 +80,7 @@ onMounted(() => {
     <router-link to="/reset-data">reinitialiser les donnees</router-link>
     <router-link to="/import">Importer un fichier</router-link>
     <router-link to="/client">Liste des clients</router-link>
+    <router-link to="/Back">api backend</router-link>
     <p v-if="message">{{ message }}</p>
     <br>
     <h2>elements</h2>

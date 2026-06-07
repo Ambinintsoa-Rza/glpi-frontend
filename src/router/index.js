@@ -7,6 +7,7 @@ import TicketListView from '@/views/TicketListView.vue'
 import FrontHomeView from '@/views/frontoffice/FrontHomeView.vue'
 import TicketCreateView from '@/views/frontoffice/TicketCreateView.vue'
 import ResetDataView from '@/views/ResetDataView.vue'
+import BackView from '@/views/backend/BackView.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -55,6 +56,12 @@ const routes = [
   {
     path: '/Front/CreateTicket',
     component: TicketCreateView
+  },
+
+  //backend
+  {
+    path: '/Back',
+    component : BackView
   }
 ]
 
