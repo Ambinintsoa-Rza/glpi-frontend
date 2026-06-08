@@ -50,7 +50,12 @@ const ticketsParType = computed(() => {
 const typeIcons = {
   Computer: '🖥️', Monitor: '🖵', Printer: '🖨️',
   Phone: '📱', NetworkEquipment: '🔌', Peripheral: '🖱️',
-  SoftwareLicense: '📄', Certificate: '🔐', Appliance: '📦', Unmanaged: '❓'
+  SoftwareLicense: '📄', Certificate: '🔐', Appliance: '📦', 
+  Unmanaged: '❓', Enclosure: '🗄️', PDU: '⚡', 
+  PassiveDCEquipment: '🔧', Cable: '🔗', Socket: '🔌',
+  Rack: '🗃️', Software: '💿',
+  Supplier: '🏭', Contact: '👤', Contract: '📋',
+  Document: '📄', Budget: '💰'
 }
 
 onMounted(async () => {

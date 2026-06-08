@@ -90,8 +90,20 @@ export const supprimerTicket = async(id) => {
 
 //recuperer les elements
 export const getElements = async() => {
-  const response = await api.get('/Assets');
-  return response.data;
+  const assetsResponse = await api.get('/Assets');
+  const assets = assetsResponse.data;
+
+  // Endpoints supplémentaires à afficher
+  const supplementaires = [
+    { href: '/Assets/PDU', name: 'PDU' },
+    { href: '/Assets/Enclosure', name: 'Enclosure' },
+    { href: '/Assets/PassiveDCEquipment', name: 'PassiveDCEquipment' },
+    { href: '/Assets/Cable', name: 'Cable' },
+    { href: '/Assets/Software', name: 'Software' },
+    { href: '/Assets/Rack', name: 'Rack' },
+  ]
+
+  return [...assets, ...supplementaires]
 }
 
 export const countElements = async (href) => {
@@ -149,6 +161,12 @@ const ENDPOINTS_A_REINITIALISER = [
   '/Assets/Certificate',
   '/Assets/Appliance',
   '/Assets/Unmanaged',
+  '/Assets/PDU',
+  '/Assets/Enclosure', 
+  '/Assets/PassiveDCEquipment', 
+  '/Assets/Cable',
+  '/Assets/Software',
+  '/Assets/Rack',
 
   // 3. Enfin la gestion et les outils
   '/Management/Supplier',
@@ -186,9 +204,34 @@ const supprimerTout = async (endpoint) => {
   }
 }
 // Réinitialisation complète
+// Users de base GLPI à ne pas supprimer
+const USERS_BASE = ['glpi', 'tech', 'normal', 'post-only', 'glpi-system']
+
 export const reinitialiserDonnees = async () => {
+  // Supprimer les données métier
   for (const endpoint of ENDPOINTS_A_REINITIALISER) {
     await supprimerTout(endpoint)
+  }
+
+  // Supprimer les users créés (pas les users de base)
+  try {
+    const sessionToken = await initLegacySession()
+    const response = await axios.get(`${LEGACY_URL}/User`, {
+      headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+    })
+    
+    const usersASupprimer = response.data.filter(u => !USERS_BASE.includes(u.name))
+    
+    await Promise.all(
+      usersASupprimer.map(u =>
+        axios.delete(`${LEGACY_URL}/User/${u.id}`, {
+          headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN },
+          data: { force_purge: 1 }
+        })
+      )
+    )
+  } catch(e) {
+    console.warn('Erreur suppression users:', e.message)
   }
 }
 
@@ -197,44 +240,98 @@ export const reinitialiserDonnees = async () => {
 export const getOrCreateDropdown = async (type, name) => {
   if (!name) return null
   
+  const sessionToken = await initLegacySession()
+  const headers = {
+    'Session-Token': sessionToken,
+    'App-Token': APP_TOKEN,
+    'Content-Type': 'application/json'
+  }
+
   // Chercher si existe déjà
-  const response = await api.get(`/Dropdowns/${type}?filter=name==${name}`)
-  if (response.data && response.data.length > 0) {
+  const response = await axios.get(`${LEGACY_URL}/${type}?searchText[name]=${encodeURIComponent(name)}`, { headers })
+  if (response.data && Array.isArray(response.data) && response.data.length > 0) {
     return response.data[0].id
   }
   
   // Créer si n'existe pas
-  const created = await api.post(`/Dropdowns/${type}`, { name })
+  const created = await axios.post(`${LEGACY_URL}/${type}`, { input: { name } }, { headers })
   return created.data.id
 }
 
-// Créer un asset
-export const creerAsset = async (asset) => {
-  const itemType = asset.Item_Type
+// Créer un utilisateur
+export const creerUser = async (nom) => {
+  if (!nom || nom.trim() === '') return null
+  
+  const sessionToken = await initLegacySession()
+  
+  // Transformer "Rakoto Jean" en name="rakoto_jean", firstname="Jean", realname="Rakoto"
+  const parts = nom.trim().split(' ')
+  const realname = parts[0]
+  const firstname = parts.slice(1).join(' ') || realname
+  const username = nom.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
 
-  const [
-    status_id,
-    location_id,
-    manufacturer_id,
-    model_id
-  ] = await Promise.all([
-    getOrCreateDropdown('State', asset.Status),
-    getOrCreateDropdown('Location', asset.Location),
-    getOrCreateDropdown('Manufacturer', asset.Manufacturer),
-    getOrCreateDropdown(`${itemType}Model`, asset.Model),
-  ])
-
-  const payload = {
-    name: asset.Name,
-    otherserial: asset.Inventory_Number,
-    status: status_id,
-    location: location_id,
-    manufacturer: manufacturer_id,
-    model: model_id,
+  // Vérifier si l'utilisateur existe déjà
+  const check = await axios.get(`${LEGACY_URL}/User?searchText[name]=${username}`, {
+    headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+  })
+  if (check.data && Array.isArray(check.data) && check.data.length > 0) {
+    return check.data[0].id
   }
 
-  const response = await api.post(`/Assets/${itemType}`, payload)
-  return { ...response.data, originalName: asset.Name, type: itemType }
+  // Créer l'utilisateur
+  const response = await axios.post(`${LEGACY_URL}/User`, {
+    input: {
+      name: username,
+      realname,
+      firstname,
+      password: 'Password123!',
+      password2: 'Password123!'
+    }
+  }, {
+    headers: {
+      'Session-Token': sessionToken,
+      'App-Token': APP_TOKEN,
+      'Content-Type': 'application/json'
+    }
+  })
+  return response.data.id
+}
+
+// Créer un asset
+// Types qui n'ont pas de modèle dans GLPI
+const TYPES_SANS_MODELE = ['Cable', 'Socket', 'Appliance', 'Software', 'SoftwareLicense', 'Certificate']
+
+export const creerAsset = async (asset) => {
+  const itemType = asset.Item_Type
+  console.log('Création asset:', itemType, asset.Name)
+
+  try {
+    const aUnModele = !TYPES_SANS_MODELE.includes(itemType)
+
+    const [status_id, location_id, manufacturer_id, model_id, user_id] = await Promise.all([
+      getOrCreateDropdown('State', asset.Status),
+      getOrCreateDropdown('Location', asset.Location),
+      getOrCreateDropdown('Manufacturer', asset.Manufacturer),
+      aUnModele ? getOrCreateDropdown(`${itemType}Model`, asset.Model) : Promise.resolve(null),
+      asset.User ? creerUser(asset.User) : Promise.resolve(null),
+    ])
+
+    const payload = {
+      name: asset.Name,
+      otherserial: asset.Inventory_Number,
+      status: status_id,
+      location: location_id,
+      manufacturer: manufacturer_id,
+      ...(model_id && { model: model_id }),
+      ...(user_id && { user: user_id }),
+    }
+
+    const response = await api.post(`/Assets/${itemType}`, payload)
+    return { ...response.data, originalName: asset.Name, type: itemType }
+  } catch(e) {
+    console.error('Erreur creerAsset:', itemType, asset.Name, e.response?.data || e.message)
+    throw e
+  }
 }
 
 // Créer un coût de ticket (via legacy)

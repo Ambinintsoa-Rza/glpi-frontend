@@ -15,7 +15,7 @@ const PRIORITY_MAP = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4, 'Very Hi
 const TYPE_MAP = { 'Incident': 1, 'Request': 2, 'Demande': 2 }
 
 const parseCsv = (file) => new Promise((resolve) => {
-  Papa.parse(file, { header: true, delimiter: ';', skipEmptyLines: true, complete: (r) => resolve(r.data) })
+  Papa.parse(file, { header: true, delimiter: '', skipEmptyLines: true, complete: (r) => resolve(r.data) })
 })
 
 const assetsFile = ref(null)
