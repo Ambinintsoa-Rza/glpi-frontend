@@ -61,10 +61,9 @@ export const getUsers = async() => {
 
 //recuperer la liste des tickets
 export const getTickets = async() => {
-  const response = await api.get('/Assistance/Ticket');
+  const response = await api.get('/Assistance/Ticket?filter=is_deleted==false')
   return response.data
 }
-
 //nouveau ticket
 export const newTicket = async (titre, description, type = 1, status = 1, priority = 3) => {
   const response = await api.post('/Assistance/Ticket', {
@@ -159,18 +158,28 @@ const ENDPOINTS_A_REINITIALISER = [
 // Supprimer tous les éléments d'un endpoint
 const supprimerTout = async (endpoint) => {
   try {
-    const response = await api.get(endpoint)
+    const response = await api.get(`${endpoint}?filter=is_deleted==false`)
     const elements = response.data
     if (!elements || elements.length === 0) return
+
+    const sessionToken = await initLegacySession()
+    const legacyEndpoint = endpoint.split('/').pop() // ex: 'Computer', 'Ticket'
+
     await Promise.all(
-      elements.map(el => api.delete(`${endpoint}/${el.id}`))
+      elements.map(el => 
+        axios.delete(`${LEGACY_URL}/${legacyEndpoint}/${el.id}`, {
+          headers: {
+            'Session-Token': sessionToken,
+            'App-Token': APP_TOKEN,
+          },
+          data: { force_purge: 1 }
+        })
+      )
     )
   } catch (error) {
     console.warn(`Impossible de réinitialiser ${endpoint}:`, error.message)
-    // On continue même si un endpoint échoue
   }
 }
-
 // Réinitialisation complète
 export const reinitialiserDonnees = async () => {
   for (const endpoint of ENDPOINTS_A_REINITIALISER) {
