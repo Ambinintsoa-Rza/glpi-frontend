@@ -1,8 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { getTickets, supprimerTicket } from '@/api/glpi';
+import { getTickets, supprimerTicket, getCoutTicket } from '@/api/glpi';
 
 const tickets = ref([]);
+const coutsTicket = ref([])
+const loadingCouts = ref(false)
 const ticketSelectionne = ref(null)
 const loading = ref(true)
 
@@ -20,8 +22,26 @@ const listeTicket = async () => {
   }
 }
 
-const voirFiche = (ticket) => { ticketSelectionne.value = ticket }
-const fermerFiche = () => { ticketSelectionne.value = null }
+const voirFiche = async (ticket) => {
+  ticketSelectionne.value = ticket
+  coutsTicket.value = []
+  
+  if (ticket.costs?.length > 0) {
+    loadingCouts.value = true
+    try {
+      coutsTicket.value = await getCoutTicket(ticket.id)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      loadingCouts.value = false
+    }
+  }
+}
+
+const fermerFiche = () => {
+  ticketSelectionne.value = null
+  coutsTicket.value = []
+}
 
 const SupprimerTicket = async (id) => {
   if (!confirm('Confirmer la suppression ?')) return
@@ -119,6 +139,20 @@ onMounted(() => listeTicket())
               <span class="fiche-label">Date création</span>
               <span>{{ formatDate(ticketSelectionne.date_creation) }}</span>
             </div>
+            <!-- Coûts -->
+          <div class="fiche-section">
+            <span class="fiche-label">Coûts</span>
+            <div v-if="loadingCouts" class="couts-empty">Chargement...</div>
+            <div v-else-if="coutsTicket.length === 0" class="couts-empty">Aucun coût</div>
+            <div v-else class="couts-list">
+              <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
+                <div class="cout-details">
+                  <p><span v-if="cout.cost_time">🕐 Temps : {{ cout.cost_time }} €</span></p>
+                  <span v-if="cout.cost_fixed">📌 Fixe : {{ cout.cost_fixed }} €</span>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -305,4 +339,32 @@ onMounted(() => listeTicket())
   letter-spacing: 0.5px;
   color: #9ca3af;
 }
+
+.fiche-section { margin-top: 16px; }
+
+.couts-loading, .couts-empty {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+.couts-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+
+.cout-row {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.cout-name { font-size: 13px; font-weight: 600; color: #1e2a3a; }
+
+.cout-details {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.cout-details span { font-size: 12px; color: #4b5563; }
 </style>

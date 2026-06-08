@@ -3,29 +3,58 @@ import { newTicket, getElements, api, associerElementTicket } from '@/api/glpi';
 import { reactive, ref, onMounted } from 'vue';
 
 const formulaire = reactive({
-    titre:'',
-    description:''
-});
+  titre: '',
+  description: '',
+  type: 1,
+  status: 1,
+  priority: 3
+})
+
+const TYPE_OPTIONS = [
+  { value: 1, label: 'Incident' },
+  { value: 2, label: 'Demande' }
+]
+
+const STATUS_OPTIONS = [
+  { value: 1, label: 'Nouveau' },
+  { value: 2, label: 'En attente de validation' },
+  { value: 3, label: 'Assigné' },
+  { value: 4, label: 'Planifié' },
+  { value: 5, label: 'En attente' },
+  { value: 6, label: 'Résolu' },
+  { value: 7, label: 'Clôturé' }
+]
+
+const PRIORITY_OPTIONS = [
+  { value: 1, label: 'Très basse' },
+  { value: 2, label: 'Basse' },
+  { value: 3, label: 'Moyenne' },
+  { value: 4, label: 'Haute' },
+  { value: 5, label: 'Très haute' },
+  { value: 6, label: 'Majeure' }
+]
 
 //nouveau ticket
 const nouveauTicket = async () => {
   try {
-    const ticket = await newTicket(formulaire.titre, formulaire.description)
-    
-    // Associer les éléments sélectionnés
+    const ticket = await newTicket(
+      formulaire.titre,
+      formulaire.description,
+      formulaire.type,
+      formulaire.status,
+      formulaire.priority
+    )
     await Promise.all(
-      elementsSelectionnes.value.map(el => 
+      elementsSelectionnes.value.map(el =>
         associerElementTicket(ticket.id, el.type, el.id)
       )
     )
-    
-    console.log('Ticket créé avec éléments associés !')
-    
-    // Reset formulaire
     formulaire.titre = ''
     formulaire.description = ''
+    formulaire.type = 1
+    formulaire.status = 1
+    formulaire.priority = 3
     elementsSelectionnes.value = []
-    
   } catch (error) {
     console.error(error)
   }
@@ -106,6 +135,35 @@ onMounted(() => {
             placeholder="Décrivez le problème ou la demande"
           />
         </div>
+
+        <div class="form-row">
+  <div class="form-group">
+    <label>Type</label>
+    <select v-model="formulaire.type">
+      <option v-for="opt in TYPE_OPTIONS" :key="opt.value" :value="opt.value">
+        {{ opt.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Statut</label>
+    <select v-model="formulaire.status">
+      <option v-for="opt in STATUS_OPTIONS" :key="opt.value" :value="opt.value">
+        {{ opt.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Priorité</label>
+    <select v-model="formulaire.priority">
+      <option v-for="opt in PRIORITY_OPTIONS" :key="opt.value" :value="opt.value">
+        {{ opt.label }}
+      </option>
+    </select>
+  </div>
+</div>
 
         <button
           class="btn-primary"
@@ -358,5 +416,11 @@ input[type="checkbox"] {
     align-items: flex-start;
     gap: 10px;
   }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
 }
 </style>

@@ -64,6 +64,11 @@ export const getTickets = async() => {
   const response = await api.get('/Assistance/Ticket?filter=is_deleted==false')
   return response.data
 }
+export const getCoutTicket = async (ticketId) => {
+  const response = await api.get(`/Assistance/Ticket/${ticketId}/Cost`)
+  return response.data
+}
+
 //nouveau ticket
 export const newTicket = async (titre, description, type = 1, status = 1, priority = 3) => {
   const response = await api.post('/Assistance/Ticket', {
