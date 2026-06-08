@@ -30,22 +30,21 @@ const chargerItems = async() => {
 
 const itemsFiltres = computed(() => {
     return listeItems.value.filter(item => {
-
         const matchNom = item.name
             ?.toLowerCase()
-            .includes(rechercheNom.value.toLowerCase());
+            .includes(rechercheNom.value.toLowerCase()) ?? true
 
-        const matchSerial = item.serial
-            ?.toLowerCase()
-            .includes(rechercheSerial.value.toLowerCase());
+        const matchSerial = (item.serial ?? '')
+            .toLowerCase()
+            .includes(rechercheSerial.value.toLowerCase())
 
-        const matchEntite = item.entity?.name
-            ?.toLowerCase()
-            .includes(rechercheEntite.value.toLowerCase());
+        const matchEntite = (item.entity?.name ?? '')
+            .toLowerCase()
+            .includes(rechercheEntite.value.toLowerCase())
 
-        return matchNom && matchSerial && matchEntite;
-    });
-});
+        return matchNom && matchSerial && matchEntite
+    })
+})
 
 onMounted(async() => {
     await login("glpi", "glpi"),

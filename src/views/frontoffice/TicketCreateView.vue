@@ -38,7 +38,7 @@ const recupererElements = async () => {
     const types = await getElements()
     const resultats = await Promise.all(
         types.map(async (type) => {
-            const response = await api.get(type.href)
+            const response = await api.get(`${type.href}?filter=is_deleted==false`)
             return response.data.map(el => ({
                 id: el.id,
                 name: el.name,

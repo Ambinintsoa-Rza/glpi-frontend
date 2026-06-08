@@ -102,8 +102,9 @@ export const countElements = async (href) => {
 
 //recuperer avec parametre endpoint
 export const getItems = async(href) => {
-  const response = await api.get(`${href}`);
-  return response.data;
+  const response = await api.get(`${href}?filter=is_deleted==false`)
+  if (!response.data || response.data.length === 0) return []
+  return response.data
 }
 
 // Associer un élément à un ticket
