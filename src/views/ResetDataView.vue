@@ -1,5 +1,5 @@
 <script setup>
-import { reinitialiserDonnees } from '@/api/glpi'
+import { reinitialiserDonnees } from '@/api/reset'
 import { ref } from 'vue'
 
 const message = ref('')

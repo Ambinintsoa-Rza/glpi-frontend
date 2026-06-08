@@ -2,7 +2,8 @@
 import JSZip from 'jszip'
 import { ref } from 'vue'
 import Papa from 'papaparse'
-import { creerAsset, newTicket, associerElementTicket, creerCoutTicket, uploadDocumentAsset } from '@/api/glpi'
+import { creerAsset, creerCoutTicket, uploadDocumentAsset } from '@/api/import'
+import { newTicket, associerElementTicket } from '@/api/glpi'
 
 const message = ref('')
 const messageType = ref('') // success | error
