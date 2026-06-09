@@ -8,6 +8,7 @@ import FrontHomeView from '@/views/frontoffice/FrontHomeView.vue'
 import TicketCreateView from '@/views/frontoffice/TicketCreateView.vue'
 import ResetDataView from '@/views/ResetDataView.vue'
 import BackView from '@/views/backend/BackView.vue'
+import TicketKanbanView from '@/views/frontoffice/TicketKanbanView.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -56,6 +57,11 @@ const routes = [
   {
     path: '/Front/CreateTicket',
     component: TicketCreateView
+  },
+  //liste ticket format kanban
+  {
+    path: '/Front/TicketKanban',
+    component: TicketKanbanView
   },
 
   //backend

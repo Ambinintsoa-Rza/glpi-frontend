@@ -16,6 +16,9 @@
         <router-link to="/Front/CreateTicket" class="front-nav-item">
           <span>➕</span> Nouveau ticket
         </router-link>
+        <router-link to="/Front/TicketKanban" class="front-nav-item">
+        <span>🎫</span>Tickets
+        </router-link>
       </nav>
     </aside>
 
