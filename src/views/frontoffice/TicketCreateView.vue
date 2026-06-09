@@ -17,12 +17,12 @@ const TYPE_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: 1, label: 'Nouveau' },
-  { value: 2, label: 'En attente de validation' },
-  { value: 3, label: 'Assigné' },
-  { value: 4, label: 'Planifié' },
-  { value: 5, label: 'En attente' },
-  { value: 6, label: 'Résolu' },
-  { value: 7, label: 'Clôturé' }
+  { value: 10, label: 'En attente de validation' },
+  { value: 2, label: 'Attribué' },
+  { value: 3, label: 'Planifié' },
+  { value: 4, label: 'En attente' },
+  { value: 5, label: 'Résolu' },
+  { value: 6, label: 'Clôturé' }
 ]
 
 const PRIORITY_OPTIONS = [

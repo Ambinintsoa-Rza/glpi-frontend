@@ -11,7 +11,7 @@ const loading = ref(false)
 const loadingImages = ref(false)
 const logs = ref([])
 
-const STATUS_MAP = { 'New': 1, 'Validation': 2, 'Assigned': 3, 'Planified': 4, 'Pending': 5, 'Solved': 6, 'Closed': 7 }
+const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
 const PRIORITY_MAP = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4, 'Very High': 5, 'Major': 6, 'Critical' : 6 }
 const TYPE_MAP = { 'Incident': 1, 'Request': 2, 'Demande': 2 }
 
