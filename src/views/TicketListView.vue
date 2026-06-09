@@ -129,7 +129,7 @@ onMounted(() => listeTicket())
             </div>
             <div class="fiche-item">
               <span class="fiche-label">Priorité</span>
-              <span>{{ prioriteLabels[ticketSelectionne.priority] }}</span>
+              <span>{{ prioriteLabels[ticketSelectionne.priority] }}</span> 
             </div>
             <div class="fiche-item">
               <span class="fiche-label">Demandeur</span>
