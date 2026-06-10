@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { getElements, countElements, getTickets } from '../api/glpi'
+import { getElements, countElements, getTickets, getAllComputer } from '../api/glpi'
 
 const listeElements = ref([])
 const totalElements = ref(0)
@@ -61,6 +61,7 @@ const typeIcons = {
 onMounted(async () => {
   await Promise.all([recupererElements(), listeTicket()])
   loading.value = false
+  await getAllComputer()
 })
 </script>
 
