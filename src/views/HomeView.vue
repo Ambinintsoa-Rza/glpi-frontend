@@ -15,8 +15,11 @@ const recupererElements = async () => {
       return { ...e, count: parseInt(count) }
     })
   )
-  listeElements.value = elementsAvecCount
-  totalElements.value = elementsAvecCount.reduce((sum, e) => sum + e.count, 0)
+  listeElements.value = elementsAvecCount.filter(el => el.itemtype === 'Monitor' || el.itemtype === "Computer" || el.itemtype === 'Phone')
+  console.log(listeElements.value)
+  totalElements.value = elementsAvecCount
+    .filter(el => el.itemtype === 'Monitor' || el.itemtype === "Computer" || el.itemtype === 'Phone')
+    .reduce((sum, e) => sum + e.count, 0)
 }
 
 const listeTicket = async () => {

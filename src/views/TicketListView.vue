@@ -133,7 +133,12 @@ onMounted(() => listeTicket())
             </div>
             <div class="fiche-item">
               <span class="fiche-label">Demandeur</span>
-              <span>{{ ticketSelectionne.user_recipient?.name || '-' }}</span>
+              <span>{{ ticketSelectionne.team.filter(t => t.role === 'requester').map(t => t.display_name).join(', ') || '-' }}</span>
+            </div>
+
+            <div class="fiche-item">
+              <span class="fiche-label">Assigné à</span>
+              <span>{{ ticketSelectionne.team.filter(t => t.role === 'assigned').map(t => t.display_name).join(', ') || '-' }}</span>
             </div>
             <div class="fiche-item full">
               <span class="fiche-label">Date création</span>

@@ -156,13 +156,28 @@ export const associerElementTicket = async (ticketId, itemtype, itemId) => {
 // mouvement ticket kanban
 export const changerStatutTicket = async (ticketId, statusId, options = {}) => {
   const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
+
+  // Changer le statut
   await axios.put(`${LEGACY_URL}/Ticket/${ticketId}`, {
-    input: {
-      status: statusId,
-      ...(options.technicienId ? { users_id_assign: options.technicienId } : {}),
-      ...(options.solution ? { solution: options.solution } : {})
+    input: { status: statusId }
+  }, { headers })
+
+  // Assigner le technicien via Ticket_User
+  if (options.technicienId) {
+    // Supprimer l'ancien assigné
+    const existing = await axios.get(`${LEGACY_URL}/Ticket/${ticketId}/Ticket_User?searchText[type]=2`, { headers })
+    if (existing.data?.length > 0) {
+      await axios.delete(`${LEGACY_URL}/Ticket_User/${existing.data[0].id}`, { headers })
     }
-  }, {
-    headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
-  })
+
+    // Ajouter le nouveau (type=2 = assigned)
+    await axios.post(`${LEGACY_URL}/Ticket_User`, {
+      input: {
+        tickets_id: ticketId,
+        users_id: options.technicienId,
+        type: 2
+      }
+    }, { headers })
+  }
 }
