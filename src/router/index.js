@@ -9,6 +9,7 @@ import TicketCreateView from '@/views/frontoffice/TicketCreateView.vue'
 import ResetDataView from '@/views/ResetDataView.vue'
 import BackView from '@/views/backend/BackView.vue'
 import TicketKanbanView from '@/views/frontoffice/TicketKanbanView.vue'
+import ParametresKanban from '@/views/frontoffice/ParametresKanban.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -62,6 +63,12 @@ const routes = [
   {
     path: '/Front/TicketKanban',
     component: TicketKanbanView
+  },
+  //parametre kanban
+  {
+    path: '/Kanban/parametre',
+    component: ParametresKanban,
+    meta: { requiresAuth : true}
   },
 
   //backend

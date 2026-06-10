@@ -45,6 +45,9 @@ const logout = () => {
         <router-link to="/reset-data" class="nav-item danger">
           <span>🗑️</span> Réinitialiser
         </router-link>
+        <router-link to="/Kanban/parametre" class="nav-item">
+          <span>⚙️</span>Paramètres Kanban
+        </router-link>
         <!-- <router-link to="/Back" class="nav-item">
           <span>🗄️</span> Backend SQLite
         </router-link> -->
