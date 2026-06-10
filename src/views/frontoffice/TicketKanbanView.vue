@@ -1,12 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers } from '@/api/glpi'
+import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket } from '@/api/glpi'
 import { getKanbanConfig } from '@/api/backend'
-import { supprimerTicket } from '@/api/glpi'
-import axios from 'axios'
-
-const LEGACY_URL = 'http://localhost:8081/apirest.php'
-const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
 
 const tickets = ref([])
 const loading = ref(true)
@@ -61,19 +56,9 @@ const onDragOver = (e) => e.preventDefault()
 // Changer le statut
 const confirmerChangementStatut = async () => {
   try {
-    const sessionToken = await getSessionToken()
-    await axios.put(`${LEGACY_URL}/Ticket/${ticketEnDeplacement.value.id}`, {
-      input: {
-        status: nouveauStatut.value.statusId,
-        ...(nouveauStatut.value.statusId === 2 && technicienSelectionne.value
-          ? { users_id_assign: technicienSelectionne.value }
-          : {}),
-        ...(nouveauStatut.value.statusId === 6 && commentaireResolution.value
-          ? { solution: commentaireResolution.value }
-          : {})
-      }
-    }, {
-      headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
+    await changerStatutTicket(ticketEnDeplacement.value.id, nouveauStatut.value.statusId, {
+      technicienId: technicienSelectionne.value || null,
+      solution: commentaireResolution.value || null
     })
     await listeTicket()
     showStatusDialog.value = false
@@ -81,13 +66,6 @@ const confirmerChangementStatut = async () => {
   } catch(e) {
     console.error(e)
   }
-}
-
-const getSessionToken = async () => {
-  const response = await axios.get(`${LEGACY_URL}/initSession`, {
-    headers: { 'Authorization': 'Basic Z2xwaTpnbHBp', 'App-Token': APP_TOKEN }
-  })
-  return response.data.session_token
 }
 
 // Voir fiche
@@ -208,7 +186,7 @@ onMounted(async () => {
             </div>
 
             <!-- Ajouter ticket -->
-            <button class="add-ticket-btn" @click="ouvrirCreateDialog(colonne.statusId)">
+            <button v-if="colonne.id==='new'" class="add-ticket-btn" @click="ouvrirCreateDialog(colonne.statusId)">
               + Ajouter 1 ticket
             </button>
           </div>

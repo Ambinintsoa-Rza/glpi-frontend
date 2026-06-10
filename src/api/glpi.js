@@ -141,3 +141,17 @@ export const associerElementTicket = async (ticketId, itemtype, itemId) => {
   })
   return response.data
 }
+
+// mouvement ticket kanban
+export const changerStatutTicket = async (ticketId, statusId, options = {}) => {
+  const sessionToken = await initLegacySession()
+  await axios.put(`${LEGACY_URL}/Ticket/${ticketId}`, {
+    input: {
+      status: statusId,
+      ...(options.technicienId ? { users_id_assign: options.technicienId } : {}),
+      ...(options.solution ? { solution: options.solution } : {})
+    }
+  }, {
+    headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
+  })
+}
