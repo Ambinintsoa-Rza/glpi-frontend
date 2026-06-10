@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers } from '@/api/glpi'
+import { getKanbanConfig } from '@/api/backend'
 import { supprimerTicket } from '@/api/glpi'
 import axios from 'axios'
 
@@ -27,11 +28,13 @@ const ticketEnDeplacement = ref(null)
 const nouveauStatut = ref(null)
 const commentaireResolution = ref('')
 
-const COLONNES = [
-  { id: 'new', label: 'Nouveau', statusId: 1, color: '#dbeafe', headerColor: '#3b82f6' },
-  { id: 'progress', label: 'In progress', statusId: 2, color: '#fef3c7', headerColor: '#f59e0b' },
-  { id: 'closed', label: 'Terminé', statusId: 6, color: '#dcfce7', headerColor: '#22c55e' },
-]
+//const STATUS_ID_MAP = { new: 1, progress: 2, closed: 6 }
+
+const COLONNES = ref([
+  { id: 'new',      label: 'Nouveau',    statusId: 1, color: '#dbeafe', headerColor: '#3b82f6', labelMalgache: 'Vaovao' },
+  { id: 'progress', label: 'In Progress', statusId: 2, color: '#fef3c7', headerColor: '#f59e0b', labelMalgache: 'Efa manao' },
+  { id: 'closed',   label: 'Terminé',    statusId: 6, color: '#dcfce7', headerColor: '#22c55e', labelMalgache: 'Vita' },
+])
 
 const ticketsParColonne = (statusId) => tickets.value.filter(t => t.status.id === statusId)
 
@@ -139,6 +142,24 @@ const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute',
 onMounted(async () => {
   await listeTicket()
   techniciens.value = await getUsers()
+  
+  try {
+    const { data } = await getKanbanConfig()
+    if (data.length > 0) {
+      COLONNES.value = COLONNES.value.map(col => {
+        const fromDb = data.find(d => d.statusId === col.id)
+        if (!fromDb) return col
+        return {
+          ...col,
+          color: fromDb.couleur,
+          headerColor: fromDb.couleurHeader,
+          labelMalgache: fromDb.labelMalgache
+        }
+      })
+    }
+  } catch (e) {
+    console.error(e)
+  }
 })
 </script>
 
@@ -165,7 +186,7 @@ onMounted(async () => {
         >
           <!-- Header colonne -->
           <div class="col-header" :style="{ background: colonne.headerColor }">
-            <span class="col-title">{{ colonne.label }}</span>
+            <span class="col-title">{{ colonne.labelMalgache || colonne.label }}</span>
             <span class="col-count">{{ ticketsParColonne(colonne.statusId).length }}</span>
           </div>
 

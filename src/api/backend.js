@@ -12,3 +12,7 @@ export const getAssetsLocaux = () => backend.get('/assets')
 export const creerAssetLocal = (asset) => backend.post('/assets', asset)
 export const modifierAssetLocal = (id, asset) => backend.put(`/assets/${id}`, asset)
 export const supprimerAssetLocal = (id) => backend.delete(`/assets/${id}`)
+
+// Kanban config
+export const getKanbanConfig = () => backend.get('/kanban-config')
+export const updateKanbanConfig = (statusId, config) => backend.put(`/kanban-config/${statusId}`, config)
