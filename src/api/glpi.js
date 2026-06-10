@@ -34,6 +34,17 @@ export const initLegacySession = async () => {
   return response.data.session_token
 }
 
+export const getAllComputer = async() => {
+  const session = await initLegacySession()
+  const res = await axios.get(`${LEGACY_URL}/Computer`, {
+    headers: {
+      'Session-Token': session,
+      'App-Token': APP_TOKEN
+    }
+  })
+  console.log(res.data);
+}
+
 export const login = async (username, password) => {
   const response = await axios.post('http://localhost:8081/api.php/token', {
     grant_type: 'password',
