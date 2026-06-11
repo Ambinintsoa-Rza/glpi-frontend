@@ -2,7 +2,7 @@
 import JSZip from 'jszip'
 import { ref } from 'vue'
 import Papa from 'papaparse'
-import { creerAsset, creerCoutTicket, uploadDocumentAsset } from '@/api/import'
+import { creerAsset, creerCoutTicket, uploadDocumentAsset, trouverTicketParRef } from '@/api/import'
 import { newTicket, associerElementTicket } from '@/api/glpi'
 
 const message = ref('')
@@ -11,7 +11,7 @@ const loading = ref(false)
 const loadingImages = ref(false)
 const logs = ref([])
 
-const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
+const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2, 'In progress(assigned)': 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
 const PRIORITY_MAP = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4, 'Very High': 5, 'Major': 6, 'Critical' : 6 }
 const TYPE_MAP = { 'Incident': 1, 'Request': 2, 'Demande': 2 }
 
@@ -48,7 +48,11 @@ const importer = async () => {
       try {
         const created = await creerAsset(asset)
         assetsMap[asset.Name] = { id: created.id, type: asset.Item_Type }
-        addLog(`Asset créé : ${asset.Name}`, 'success')
+        if (created.doublon) {
+          addLog(`Asset ignoré (doublon) : ${asset.Name} [${asset.Inventory_Number}]`, 'warning')
+        } else {
+          addLog(`Asset créé : ${asset.Name}`, 'success')
+        }
       } catch (e) {
         addLog(`Erreur asset ${asset.Name}: ${e.message}`, 'error')
       }
@@ -57,7 +61,16 @@ const importer = async () => {
     const ticketsMap = {}
     for (const ticket of tickets) {
       try {
-        const created = await newTicket(ticket.Titre, ticket.Description, TYPE_MAP[ticket.Type] || 1, STATUS_MAP[ticket.Status] || 1, PRIORITY_MAP[ticket.Priority] || 3)
+        // 🔍 Vérifier doublon : on cherche un ticket dont le name commence par [Ref_Ticket]
+        const existant = await trouverTicketParRef(`[${ticket.Ref_Ticket}]`)
+        
+        if (existant) {
+          ticketsMap[ticket.Ref_Ticket] = existant.id
+          addLog(`Ticket ignoré (doublon) : ${ticket.Ref_Ticket}`, 'warning')
+          continue
+        }
+
+        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, STATUS_MAP[ticket.Status] || 1, PRIORITY_MAP[ticket.Priority] || 3)
         ticketsMap[ticket.Ref_Ticket] = created.id
         addLog(`Ticket créé : ${ticket.Titre}`, 'success')
 
@@ -238,7 +251,7 @@ const importerImages = async () => {
       </div>
       <div class="logs-body">
         <div v-for="(log, i) in logs" :key="i" :class="['log-item', `log-${log.type}`]">
-          <span class="log-icon">{{ log.type === 'success' ? '✓' : log.type === 'error' ? '✗' : '→' }}</span>
+          <span class="log-icon">{{ log.type === 'success' ? '✓' : log.type === 'error' ? '✗' : log.type === 'warning' ? '⚠' : '→' }}</span>
           {{ log.text }}
         </div>
       </div>
@@ -353,4 +366,6 @@ const importerImages = async () => {
 .log-info { color: #374151; }
 
 .log-icon { font-weight: 700; width: 14px; text-align: center; }
+
+.log-warning { color: #d97706; background: #fef3c7; }
 </style>

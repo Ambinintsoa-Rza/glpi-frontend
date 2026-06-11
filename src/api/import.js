@@ -53,6 +53,14 @@ export const creerAsset = async (asset) => {
   const itemType = asset.Item_Type
   const aUnModele = !TYPES_SANS_MODELE.includes(itemType)
 
+    // 🔍 Vérifier doublon par numéro d'inventaire
+  if (asset.Inventory_Number) {
+    const existant = await trouverAssetParInventaire(itemType, asset.Inventory_Number)
+    if (existant) {
+      return { id: existant.id, originalName: asset.Name, type: itemType, doublon: true }
+    }
+  }
+
   const [status_id, location_id, manufacturer_id, model_id, user_id] = await Promise.all([
     getOrCreateDropdown('State', asset.Status),
     getOrCreateDropdown('Location', asset.Location),
@@ -72,7 +80,7 @@ export const creerAsset = async (asset) => {
   }
 
   const response = await api.post(`/Assets/${itemType}`, payload)
-  return { ...response.data, originalName: asset.Name, type: itemType }
+  return { ...response.data, originalName: asset.Name, type: itemType, doublon: false }
 }
 
 export const creerCoutTicket = async (ticketId, cout) => {
@@ -103,4 +111,34 @@ export const uploadDocumentAsset = async (assetName, imageFile) => {
     headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
   })
   return response.data
+}
+
+//gestion doublon
+export const trouverAssetParInventaire = async (itemType, numeroInventaire) => {
+  if (!numeroInventaire) return null
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+
+  try {
+    const response = await axios.get(
+      `${LEGACY_URL}/${itemType}?searchText[otherserial]=${encodeURIComponent(numeroInventaire)}`,
+      { headers }
+    )
+    return Array.isArray(response.data) && response.data.length > 0 ? response.data[0] : null
+  } catch {
+    return null
+  }
+}
+
+export const trouverTicketParRef = async (ref) => {
+  if (!ref) return null
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+
+  // On stocke la ref dans le champ 'name' préfixé, ou on cherche par nom exact
+  const response = await axios.get(
+    `${LEGACY_URL}/Ticket?searchText[name]=${encodeURIComponent(ref)}`,
+    { headers }
+  )
+  return response.data?.length > 0 ? response.data[0] : null
 }

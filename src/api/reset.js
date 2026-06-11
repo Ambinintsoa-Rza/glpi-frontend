@@ -35,11 +35,14 @@ const ENDPOINTS_A_REINITIALISER = [
   '/Tools/RSSFeed',
 ]
 
-const supprimerTout = async (endpoint) => {
+const supprimerTout = async (endpoint, onLog) => {
   try {
     const response = await api.get(`${endpoint}?filter=is_deleted==false`)
     const elements = response.data
-    if (!elements || elements.length === 0) return
+    if (!elements || elements.length === 0) {
+      onLog?.(`Rien à supprimer : ${endpoint}`, 'info')
+      return
+    }
 
     const sessionToken = await initLegacySession()
     const legacyEndpoint = endpoint.split('/').pop()
@@ -52,14 +55,16 @@ const supprimerTout = async (endpoint) => {
         })
       )
     )
+    onLog?.(`✓ ${elements.length} élément(s) supprimé(s) : ${legacyEndpoint}`, 'success')
   } catch (error) {
-    console.warn(`Impossible de réinitialiser ${endpoint}:`, error.message)
+    onLog?.(`Erreur ${endpoint}: ${error.message}`, 'error')
   }
 }
 
-export const reinitialiserDonnees = async () => {
+
+export const reinitialiserDonnees = async (onLog) => {
   for (const endpoint of ENDPOINTS_A_REINITIALISER) {
-    await supprimerTout(endpoint)
+    await supprimerTout(endpoint, onLog)
   }
 
   try {
@@ -67,18 +72,23 @@ export const reinitialiserDonnees = async () => {
     const response = await axios.get(`${LEGACY_URL}/User`, {
       headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
     })
-    
+
     const usersASupprimer = response.data.filter(u => !USERS_BASE.includes(u.name))
-    
-    await Promise.all(
-      usersASupprimer.map(u =>
-        axios.delete(`${LEGACY_URL}/User/${u.id}`, {
-          headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN },
-          data: { force_purge: 1 }
-        })
+
+    if (usersASupprimer.length === 0) {
+      onLog?.('Aucun utilisateur à supprimer', 'info')
+    } else {
+      await Promise.all(
+        usersASupprimer.map(u =>
+          axios.delete(`${LEGACY_URL}/User/${u.id}`, {
+            headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN },
+            data: { force_purge: 1 }
+          })
+        )
       )
-    )
+      onLog?.(`✓ ${usersASupprimer.length} utilisateur(s) supprimé(s)`, 'success')
+    }
   } catch(e) {
-    console.warn('Erreur suppression users:', e.message)
+    onLog?.(`Erreur suppression users: ${e.message}`, 'error')
   }
 }

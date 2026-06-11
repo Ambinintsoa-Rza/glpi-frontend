@@ -5,12 +5,18 @@ import { ref } from 'vue'
 const message = ref('')
 const loading = ref(false)
 
+const logs = ref([])
+const addLog = (text, type = 'info') => logs.value.push({ text, type })
+
 const reinitialiser = async () => {
   if (!confirm('Confirmer la réinitialisation ? Cette action est irréversible !')) return
-  
+
   loading.value = true
+  logs.value = []
+  message.value = ''
+
   try {
-    await reinitialiserDonnees()
+    await reinitialiserDonnees(addLog)
     message.value = 'Données réinitialisées avec succès !'
   } catch (error) {
     message.value = 'Erreur lors de la réinitialisation'
@@ -74,6 +80,12 @@ const reinitialiser = async () => {
         >
           {{ loading ? '⏳ Réinitialisation...' : '🗑️ Réinitialiser les données' }}
         </button>
+      <div v-if="logs.length > 0" class="logs-body">
+        <div v-for="(log, i) in logs" :key="i" :class="['log-item', `log-${log.type}`]">
+          <span class="log-icon">{{ log.type === 'success' ? '✓' : log.type === 'error' ? '✗' : '→' }}</span>
+          {{ log.text }}
+        </div>
+      </div>
 
         <router-link
           to="/import-data"
@@ -225,4 +237,17 @@ const reinitialiser = async () => {
 .back-link:hover {
   text-decoration: underline;
 }
+
+.logs-body {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px 0;
+}
+.log-item { display: flex; align-items: center; gap: 10px; padding: 7px 14px; font-size: 13px; border-bottom: 1px solid #f9fafb; }
+.log-success { color: #166534; background: #f0fdf4; }
+.log-error { color: #991b1b; background: #fff5f5; }
+.log-info { color: #374151; }
+.log-icon { font-weight: 700; width: 14px; text-align: center; }
 </style>
