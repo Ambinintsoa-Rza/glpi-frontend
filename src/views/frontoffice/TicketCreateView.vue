@@ -75,7 +75,10 @@ const recupererElements = async () => {
             }))
         })
     )
-    elementsDisponibles.value = resultats.flat()
+    elementsDisponibles.value = resultats
+    .flat()
+    .filter(el => el.type === 'Computer' || el.type === "Monitor" || el.type === "Phone")
+    console.log(elementsDisponibles.value)
 }
 
 const toggleElement = (element) => {

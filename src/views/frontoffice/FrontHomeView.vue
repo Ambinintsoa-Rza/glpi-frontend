@@ -15,7 +15,11 @@ const listeElements = async() => {
 const typeSelectionne = ref('');
 const rechercheNom = ref('');
 const rechercheSerial = ref('');
-const rechercheEntite = ref('')
+ const rechercheEntite = ref('');
+ const rechercheStatus = ref('');
+ const rechercheManufacturer = ref('');
+ const rechercheModel = ref('');
+ const rechercheSerialNumber = ref('');
 
 const listeItems = ref([]);
 
@@ -26,6 +30,7 @@ const chargerItems = async() => {
 
     const items = await getItems(typeSelectionne.value);
     listeItems.value = items;
+    console.log(listeItems.value)
 }
 
 const itemsFiltres = computed(() => {
@@ -42,7 +47,23 @@ const itemsFiltres = computed(() => {
             .toLowerCase()
             .includes(rechercheEntite.value.toLowerCase())
 
-        return matchNom && matchSerial && matchEntite
+        const matchStatus = (item.status?.name ?? '')
+            .toLowerCase()
+            .includes(rechercheStatus.value.toLowerCase())
+        
+        const matchManufacturer = (item.manufacturer?.name ?? '')
+            .toLowerCase()
+            .includes(rechercheManufacturer.value.toLowerCase())
+            
+        const matchModel = (item.model?.name ?? '')
+            .toLowerCase()
+            .includes(rechercheModel.value.toLowerCase()) 
+
+        const matchSerialNumber = (item.otherserial ?? '')
+            .toLowerCase()
+            .includes(rechercheSerialNumber.value.toLowerCase())
+
+        return matchNom && matchSerial && matchEntite && matchStatus && matchManufacturer && matchModel && matchSerialNumber
     })
 })
 
@@ -101,6 +122,28 @@ onMounted(async() => {
             v-model="rechercheEntite"
             placeholder="🏢 Entité"
           />
+
+          <input
+            v-model="rechercheStatus"
+            placeholder=" Status"
+          />
+          
+
+          <input
+            v-model="rechercheManufacturer"
+            placeholder=" Fabricant"
+          />
+
+          <input
+            v-model="rechercheModel"
+            placeholder=" Molèle"
+          />
+
+          <input
+            v-model="rechercheSerialNumber"
+            placeholder=" Numéro d'inventaire"
+          />
+          
         </div>
 
       </div>
@@ -123,6 +166,10 @@ onMounted(async() => {
               <th>Nom</th>
               <th>Numéro de série</th>
               <th>Entité</th>
+              <th>Status</th>
+              <th>Fabricant</th>
+              <th>Modèle</th>
+              <th>Numéro d'inventaire</th>
             </tr>
           </thead>
 
@@ -135,6 +182,10 @@ onMounted(async() => {
               <td>{{ item.name }}</td>
               <td>{{ item.serial || '-' }}</td>
               <td>{{ item.entity?.name || '-' }}</td>
+              <td>{{ item.status?.name || '-' }}</td>
+              <td>{{ item.manufacturer?.name || '-' }}</td>
+              <td>{{ item.model?.name || '-' }}</td>
+              <td>{{ item.otherserial || '-' }}</td>
             </tr>
 
             <tr v-if="itemsFiltres.length === 0">

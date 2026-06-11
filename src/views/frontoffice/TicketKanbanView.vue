@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket } from '@/api/glpi'
+import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api } from '@/api/glpi'
 import { getKanbanConfig } from '@/api/backend'
 
 const tickets = ref([])
@@ -16,6 +16,24 @@ const nouveauTitre = ref('')
 const nouvelleDescription = ref('')
 const techniciens = ref([])
 const technicienSelectionne = ref('')   
+
+const nouveauType = ref(1)
+const nouvellePriorite = ref(3)
+const elementsDisponibles = ref([])
+const elementsSelectionnes = ref([])
+
+const TYPE_OPTIONS = [
+  { value: 1, label: 'Incident' },
+  { value: 2, label: 'Demande' }
+]
+
+const PRIORITY_OPTIONS = [
+  { value: 1, label: 'Très basse' },
+  { value: 2, label: 'Basse' },
+  { value: 3, label: 'Moyenne' },
+  { value: 4, label: 'Haute' },
+  { value: 5, label: 'Très haute' }
+]
 
 // Dialog changement statut
 const showStatusDialog = ref(false)
@@ -91,17 +109,30 @@ const ouvrirCreateDialog = (statusId) => {
   createColonne.value = statusId
   nouveauTitre.value = ''
   nouvelleDescription.value = ''
+  nouveauType.value = 1
+  nouvellePriorite.value = 3
+  elementsSelectionnes.value = []
   showCreateDialog.value = true
 }
 
 const confirmerCreation = async () => {
   if (!nouveauTitre.value.trim()) return
   try {
-    await creerTicket(nouveauTitre.value, nouvelleDescription.value, 1, createColonne.value)
+    const ticket = await creerTicket(nouveauTitre.value, nouvelleDescription.value, nouveauType.value, createColonne.value, nouvellePriorite.value)
+    await Promise.all(
+      elementsSelectionnes.value.map(el => associerElementTicket(ticket.id, el.type, el.id))
+    )
     await listeTicket()
     showCreateDialog.value = false
   } catch(e) { console.error(e) }
 }
+
+const toggleElement = (el) => {
+  const idx = elementsSelectionnes.value.findIndex(e => e.id === el.id && e.type === el.type)
+  idx === -1 ? elementsSelectionnes.value.push(el) : elementsSelectionnes.value.splice(idx, 1)
+}
+
+const estSelectionne = (el) => elementsSelectionnes.value.some(e => e.id === el.id && e.type === el.type)
 
 const listeTicket = async () => {
   try {
@@ -138,6 +169,21 @@ onMounted(async () => {
   } catch (e) {
     console.error(e)
   }
+
+const types = await getElements()
+const resultats = await Promise.all(
+  types.map(async (type) => {
+    const response = await api.get(`${type.href}?filter=is_deleted==false`)
+    return response.data.map(el => ({
+      id: el.id,
+      name: el.name,
+      type: type.href.split('/').pop()
+    }))
+  })
+)
+elementsDisponibles.value = resultats
+  .flat()
+  .filter(el => ['Computer', 'Monitor', 'Phone'].includes(el.type))
 })
 </script>
 
@@ -257,7 +303,38 @@ onMounted(async () => {
           </div>
           <div class="form-group">
             <label>Description</label>
-            <textarea v-model="nouvelleDescription" rows="4" placeholder="Description..." />
+            <textarea v-model="nouvelleDescription" rows="3" placeholder="Description..." />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select v-model="nouveauType">
+                <option v-for="opt in TYPE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priorité</label>
+              <select v-model="nouvellePriorite">
+                <option v-for="opt in PRIORITY_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Éléments associés -->
+          <div class="form-group">
+            <label>Équipements associés <span class="count-badge">{{ elementsSelectionnes.length }}</span></label>
+            <div class="elements-list">
+              <label
+                v-for="el in elementsDisponibles"
+                :key="`${el.type}-${el.id}`"
+                class="element-row"
+              >
+                <input type="checkbox" :checked="estSelectionne(el)" @change="toggleElement(el)" />
+                <span class="type-badge">{{ el.type }}</span>
+                <span>{{ el.name }}</span>
+              </label>
+            </div>
           </div>
         </div>
         <div class="dialog-footer">
@@ -586,4 +663,29 @@ onMounted(async () => {
   cursor: pointer;
 }
 .form-group select:focus { border-color: #4a9eff; }
+
+.elements-list {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.element-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.element-row:hover {
+  background: #f1f5f9;
+}
 </style>
