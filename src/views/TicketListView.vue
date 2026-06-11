@@ -8,8 +8,8 @@ const loadingCouts = ref(false)
 const ticketSelectionne = ref(null)
 const loading = ref(true)
 
-const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute' }
-const prioriteColors = { 1: '#6b7280', 2: '#3b82f6', 3: '#f59e0b', 4: '#ef4444', 5: '#7c3aed' }
+const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute', 6: 'Majeure' }
+const prioriteColors = { 1: '#6b7280', 2: '#3b82f6', 3: '#f59e0b', 4: '#ef4444', 5: '#7c3aed', 6: '#7c3aed' }
 
 const listeTicket = async () => {
   try {
