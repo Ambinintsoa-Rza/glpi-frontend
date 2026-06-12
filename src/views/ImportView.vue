@@ -26,6 +26,13 @@ const zipFile = ref(null)
 
 const addLog = (text, type = 'info') => logs.value.push({ text, type })
 
+const convertirDateGlpi = (dateStr, heureStr) => {
+  if (!dateStr) return null
+  const [jour, mois, annee] = dateStr.split('/')
+  const heure = heureStr ? `${heureStr}:00` : '00:00:00'
+  return `${annee}-${mois.padStart(2, '0')}-${jour.padStart(2, '0')} ${heure}`
+}
+
 const importer = async () => {
   if (!assetsFile.value || !ticketsFile.value || !coutsFile.value) {
     message.value = 'Veuillez sélectionner les 3 fichiers CSV'
@@ -71,12 +78,14 @@ const importer = async () => {
 
         const statusFinal = STATUS_MAP[ticket.Status] || 1
 
+        const dateOuverture = convertirDateGlpi(ticket.Date, ticket.Heure)
+
         // Toujours créer en "New" pour pouvoir associer les assets sans 400
-        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, 1, PRIORITY_MAP[ticket.Priority] || 3)
+        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, 1, PRIORITY_MAP[ticket.Priority] || 3, dateOuverture)
         ticketsMap[ticket.Ref_Ticket] = created.id
         addLog(`Ticket créé : ${ticket.Titre}`, 'success')
 
-        const items = JSON.parse(ticket.Items || '[]')
+        const items = [...new Set(JSON.parse(ticket.Items || '[]'))]
         for (const itemName of items) {
           const asset = assetsMap[itemName]
           if (asset) {

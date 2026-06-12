@@ -81,14 +81,19 @@ export const getCoutTicket = async (ticketId) => {
 }
 
 //nouveau ticket
-export const newTicket = async (titre, description, type = 1, status = 1, priority = 3) => {
-  const response = await api.post('/Assistance/Ticket', {
-    name: titre,
-    content: description,
-    type,
-    status,
-    priority
-  })
+export const newTicket = async (titre, description, type = 1, status = 1, priority = 3, date = null) => {
+  const payload = { name: titre, content: description, type, status, priority }
+  const response = await api.post('/Assistance/Ticket', payload)
+
+  if (date) {
+    const sessionToken = await initLegacySession()
+    await axios.put(`${LEGACY_URL}/Ticket/${response.data.id}`, {
+      input: { date }
+    }, {
+      headers: { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
+    })
+  }
+
   return response.data
 }
 
