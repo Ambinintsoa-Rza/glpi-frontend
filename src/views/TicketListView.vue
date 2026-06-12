@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { getTickets, supprimerTicket, getCoutTicket } from '@/api/glpi';
 
 const tickets = ref([]);
@@ -8,8 +8,18 @@ const loadingCouts = ref(false)
 const ticketSelectionne = ref(null)
 const loading = ref(true)
 
-const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute' }
-const prioriteColors = { 1: '#64748b', 2: '#7aa97f', 3: '#9ccf9e', 4: '#d97706', 5: '#dc2626' }
+const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute', 6: 'Majeure' }
+const prioriteColors = { 1: '#6b7280', 2: '#3b82f6', 3: '#f59e0b', 4: '#ef4444', 5: '#7c3aed', 6: '#7c3aed' }
+
+const coutTotal = computed(() => {
+  return coutsTicket.value.reduce((total, cout) => {
+    const tauxHoraire = parseFloat(cout.cost_time) || 0
+    const tempsHeures = (parseFloat(cout.duration) || 0) / 3600
+    const coutTemps = tauxHoraire * tempsHeures
+    const coutFixe = parseFloat(cout.cost_fixed) || 0
+    return total + coutTemps + coutFixe
+  }, 0)
+})
 
 const listeTicket = async () => {
   try {
@@ -30,6 +40,7 @@ const voirFiche = async (ticket) => {
     loadingCouts.value = true
     try {
       coutsTicket.value = await getCoutTicket(ticket.id)
+      console.log('COUTS:', JSON.stringify(coutsTicket.value, null, 2))
     } catch (e) {
       console.error(e)
     } finally {
@@ -64,8 +75,9 @@ onMounted(() => listeTicket())
     <div class="page-header">
       <div>
         <h1>Tickets</h1>
+        <p class="subtitle">{{ tickets.length }} ticket(s) actif(s)</p>
       </div>
-      <router-link to="/Front/CreateTicket" class="btn-primary">Nouveau ticket</router-link>
+      <router-link to="/Front/CreateTicket" class="btn-primary">➕ Nouveau ticket</router-link>
     </div>
 
     <div class="content-layout" :class="{ 'with-fiche': ticketSelectionne }">
@@ -100,7 +112,7 @@ onMounted(() => listeTicket())
               </td>
               <td class="date-cell">{{ formatDate(ticket.date_creation) }}</td>
               <td @click.stop>
-                <button class="btn-icon btn-danger" @click="SupprimerTicket(ticket.id)" title="Supprimer">Supprimer</button>
+                <button class="btn-icon btn-danger" @click="SupprimerTicket(ticket.id)" title="Supprimer">🗑️</button>
               </td>
             </tr>
           </tbody>
@@ -111,7 +123,7 @@ onMounted(() => listeTicket())
       <div v-if="ticketSelectionne" class="fiche-card">
         <div class="fiche-header">
           <h3>Ticket #{{ ticketSelectionne.id }}</h3>
-          <button class="btn-close" @click="fermerFiche">Fermer</button>
+          <button class="btn-close" @click="fermerFiche">✕</button>
         </div>
         <div class="fiche-body">
           <div class="fiche-title">{{ ticketSelectionne.name }}</div>
@@ -140,20 +152,25 @@ onMounted(() => listeTicket())
               <span>{{ ticketSelectionne.team.filter(t => t.role === 'assigned').map(t => t.display_name).join(', ') || '-' }}</span>
             </div>
             <div class="fiche-item full">
-              <span class="fiche-label">Date création</span>
-              <span>{{ formatDate(ticketSelectionne.date_creation) }}</span>
+              <span class="fiche-label">Date ouverture</span>
+              <span>{{ formatDate(ticketSelectionne.date) }}</span>
             </div>
             <!-- Coûts -->
           <div class="fiche-section">
             <span class="fiche-label">Coûts</span>
             <div v-if="loadingCouts" class="couts-empty">Chargement...</div>
             <div v-else-if="coutsTicket.length === 0" class="couts-empty">Aucun coût</div>
-            <div v-else class="couts-list">
-              <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
-                <div class="cout-details">
-                  <p><span v-if="cout.cost_time">Temps : {{ cout.cost_time }} €</span></p>
-                  <span v-if="cout.cost_fixed">Fixe : {{ cout.cost_fixed }} €</span>
+            <div v-else>
+              <div class="couts-list">
+                <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
+                  <div class="cout-details">
+                    <p><span v-if="cout.cost_time">🕐 Temps : {{ cout.cost_time }} €</span></p>
+                    <span v-if="cout.cost_fixed">📌 Fixe : {{ cout.cost_fixed }} €</span> 
+                  </div>
                 </div>
+              </div>
+              <div class="cout-total">
+                💰 Total : <strong>{{ coutTotal.toFixed(2) }} €</strong>
               </div>
             </div>
           </div>
@@ -165,6 +182,15 @@ onMounted(() => listeTicket())
 </template>
 
 <style scoped>
+.cout-total {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e2a3a;
+}
+
 .tickets-page { padding: 0; }
 
 .page-header {
@@ -174,10 +200,11 @@ onMounted(() => listeTicket())
   margin-bottom: 24px;
 }
 
-.page-header h1 { font-size: 24px; font-weight: 700; color: var(--color-text); }
+.page-header h1 { font-size: 24px; font-weight: 700; color: #1e2a3a; }
+.subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
 
 .btn-primary {
-  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: #1e2a3a;
   color: #fff;
   padding: 10px 18px;
   border-radius: 8px;
@@ -186,7 +213,7 @@ onMounted(() => listeTicket())
   font-weight: 500;
   transition: background 0.2s;
 }
-.btn-primary:hover { filter: brightness(1.02); }
+.btn-primary:hover { background: #2d3f54; }
 
 /* Layout */
 .content-layout {
@@ -201,14 +228,14 @@ onMounted(() => listeTicket())
 
 /* Card */
 .card {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 
-.empty { padding: 40px; text-align: center; color: var(--color-muted); }
+.empty { padding: 40px; text-align: center; color: #9ca3af; }
 
 /* Table */
 .ticket-table {
@@ -222,29 +249,29 @@ onMounted(() => listeTicket())
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-muted);
-  background: var(--color-surface-soft);
-  border-bottom: 1px solid var(--color-border);
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .ticket-table td {
   padding: 12px 16px;
   font-size: 14px;
-  color: var(--color-text);
-  border-bottom: 1px solid #edf4ed;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.ticket-table tr:hover td { background: var(--color-surface-soft); cursor: pointer; }
-.ticket-table tr.active td { background: var(--color-primary-soft); }
+.ticket-table tr:hover td { background: #f9fafb; cursor: pointer; }
+.ticket-table tr.active td { background: #eff6ff; }
 
-.id-cell { color: var(--color-muted); font-size: 13px; }
-.title-cell { font-weight: 500; color: var(--color-text); }
-.date-cell { font-size: 13px; color: var(--color-muted); }
+.id-cell { color: #9ca3af; font-size: 13px; }
+.title-cell { font-weight: 500; color: #1e2a3a; }
+.date-cell { font-size: 13px; color: #6b7280; }
 
 /* Badges */
 .status-badge {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: #dbeafe;
+  color: #1d4ed8;
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -264,19 +291,18 @@ onMounted(() => listeTicket())
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 16px;
   transition: background 0.2s;
 }
-.btn-danger:hover { background: var(--color-danger-soft); }
+.btn-danger:hover { background: #fee2e2; }
 
 /* Fiche */
 .fiche-card {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   height: fit-content;
   position: sticky;
@@ -288,34 +314,34 @@ onMounted(() => listeTicket())
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.fiche-header h3 { font-size: 15px; font-weight: 600; color: var(--color-text); }
+.fiche-header h3 { font-size: 15px; font-weight: 600; color: #1e2a3a; }
 
 .btn-close {
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-border);
+  background: none;
+  border: none;
   cursor: pointer;
-  color: var(--color-primary-dark);
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
-.btn-close:hover { background: #d4ead6; color: var(--color-text); }
+.btn-close:hover { background: #f3f4f6; color: #374151; }
 
 .fiche-body { padding: 20px; }
 
 .fiche-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--color-text);
+  color: #1e2a3a;
   margin-bottom: 8px;
 }
 
 .fiche-content {
   font-size: 14px;
-  color: var(--color-muted);
+  color: #6b7280;
   margin-bottom: 20px;
   padding: 12px;
   background: #f9fafb;
@@ -341,27 +367,27 @@ onMounted(() => listeTicket())
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-muted);
+  color: #9ca3af;
 }
 
 .fiche-section { margin-top: 16px; }
 
 .couts-loading, .couts-empty {
   font-size: 13px;
-  color: var(--color-muted);
+  color: #6b7280;
   margin-top: 6px;
 }
 
 .couts-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 
 .cout-row {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 10px 14px;
 }
 
-.cout-name { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.cout-name { font-size: 13px; font-weight: 600; color: #1e2a3a; }
 
 .cout-details {
   display: flex;
@@ -370,5 +396,5 @@ onMounted(() => listeTicket())
   flex-wrap: wrap;
 }
 
-.cout-details span { font-size: 12px; color: var(--color-muted); }
+.cout-details span { font-size: 12px; color: #4b5563; }
 </style>

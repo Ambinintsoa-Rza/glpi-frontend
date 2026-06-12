@@ -1,9 +1,10 @@
+ImportView :
 <script setup>
 import JSZip from 'jszip'
 import { ref } from 'vue'
 import Papa from 'papaparse'
 import { creerAsset, creerCoutTicket, uploadDocumentAsset, trouverTicketParRef } from '@/api/import'
-import { newTicket, associerElementTicket } from '@/api/glpi'
+import { newTicket, associerElementTicket, changerStatutFinal } from '@/api/glpi'
 
 const message = ref('')
 const messageType = ref('') // success | error
@@ -11,7 +12,7 @@ const loading = ref(false)
 const loadingImages = ref(false)
 const logs = ref([])
 
-const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2, 'In progress(assigned)': 2,'In progress (assigned)':2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
+const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2,'In progress' : 2, 'In progress(assigned)': 2, 'In progress (assigned)' : 2 ,'In Progress' : 2, 'In Progress(assigned)': 2, 'In Progress (assigned)' : 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
 const PRIORITY_MAP = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4, 'Very High': 5, 'Major': 6, 'Critical' : 6 }
 const TYPE_MAP = { 'Incident': 1, 'Request': 2, 'Demande': 2 }
 
@@ -25,6 +26,13 @@ const coutsFile = ref(null)
 const zipFile = ref(null)
 
 const addLog = (text, type = 'info') => logs.value.push({ text, type })
+
+const convertirDateGlpi = (dateStr, heureStr) => {
+  if (!dateStr) return null
+  const [jour, mois, annee] = dateStr.split('/')
+  const heure = heureStr ? `${heureStr}:00` : '00:00:00'
+  return `${annee}-${mois.padStart(2, '0')}-${jour.padStart(2, '0')} ${heure}`
+}
 
 const importer = async () => {
   if (!assetsFile.value || !ticketsFile.value || !coutsFile.value) {
@@ -41,7 +49,7 @@ const importer = async () => {
     const assets = await parseCsv(assetsFile.value)
     const tickets = await parseCsv(ticketsFile.value)
     const couts = await parseCsv(coutsFile.value)
-    addLog('CSV parsés avec succès', 'success')
+    addLog('CSV parsés avec succès ✓', 'success')
 
     const assetsMap = {}
     for (const asset of assets) {
@@ -61,26 +69,35 @@ const importer = async () => {
     const ticketsMap = {}
     for (const ticket of tickets) {
       try {
-        // Vérifier doublon : on cherche un ticket dont le name commence par [Ref_Ticket]
+        // 🔍 Vérifier doublon
         const existant = await trouverTicketParRef(`[${ticket.Ref_Ticket}]`)
-        
         if (existant) {
           ticketsMap[ticket.Ref_Ticket] = existant.id
           addLog(`Ticket ignoré (doublon) : ${ticket.Ref_Ticket}`, 'warning')
           continue
         }
 
-        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, STATUS_MAP[ticket.Status] || 1, PRIORITY_MAP[ticket.Priority] || 3)
+        const statusFinal = STATUS_MAP[ticket.Status] || 1
+
+        const dateOuverture = convertirDateGlpi(ticket.Date, ticket.Heure)
+
+        // Toujours créer en "New" pour pouvoir associer les assets sans 400
+        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, 1, PRIORITY_MAP[ticket.Priority] || 3, dateOuverture)
         ticketsMap[ticket.Ref_Ticket] = created.id
         addLog(`Ticket créé : ${ticket.Titre}`, 'success')
 
-        const items = JSON.parse(ticket.Items || '[]')
+        const items = [...new Set(JSON.parse(ticket.Items || '[]'))]
         for (const itemName of items) {
           const asset = assetsMap[itemName]
           if (asset) {
             await associerElementTicket(created.id, asset.type, asset.id)
-            addLog(`Asset ${itemName} associé`, 'info')
+            addLog(`→ Asset ${itemName} associé`, 'info')
           }
+        }
+
+        if (statusFinal !== 1) {
+          const solution = [5, 6].includes(statusFinal) ? (ticket.Solution || 'Résolu') : null
+          await changerStatutFinal(created.id, statusFinal, solution)
         }
       } catch (e) {
         addLog(`Erreur ticket ${ticket.Titre}: ${e.message}`, 'error')
@@ -165,6 +182,7 @@ const importerImages = async () => {
   <div class="import-page">
     <div class="page-header">
       <h1>Import de données</h1>
+      <p class="subtitle">Importez vos assets, tickets et images depuis des fichiers CSV/ZIP</p>
     </div>
 
     <!-- Alert message -->
@@ -177,7 +195,7 @@ const importerImages = async () => {
       <!-- Import CSV -->
       <div class="card">
         <div class="card-header">
-          <h3>Import CSV</h3>
+          <h3>📂 Import CSV</h3>
         </div>
         <div class="card-body">
           <div class="file-field">
@@ -211,7 +229,7 @@ const importerImages = async () => {
           </div>
 
           <button class="btn-primary" @click="importer" :disabled="loading">
-            {{ loading ? 'Import en cours...' : 'Lancer l\'import' }}
+            {{ loading ? '⏳ Import en cours...' : '▶ Lancer l\'import' }}
           </button>
         </div>
       </div>
@@ -219,7 +237,7 @@ const importerImages = async () => {
       <!-- Import Images -->
       <div class="card">
         <div class="card-header">
-          <h3>Import Images</h3>
+          <h3>🖼️ Import Images</h3>
         </div>
         <div class="card-body">
           <p class="help-text">Importez un fichier ZIP contenant les images des assets (PNG/JPEG nommés par nom d'asset).</p>
@@ -235,7 +253,7 @@ const importerImages = async () => {
           </div>
 
           <button class="btn-secondary" @click="importerImages" :disabled="loadingImages">
-            {{ loadingImages ? 'Upload en cours...' : 'Importer les images' }}
+            {{ loadingImages ? '⏳ Upload en cours...' : '🖼️ Importer les images' }}
           </button>
         </div>
       </div>
@@ -245,11 +263,12 @@ const importerImages = async () => {
     <!-- Logs -->
     <div v-if="logs.length > 0" class="card logs-card">
       <div class="card-header">
-        <h3>Logs d'import</h3>
+        <h3>📋 Logs d'import</h3>
         <span class="log-count">{{ logs.length }} entrée(s)</span>
       </div>
       <div class="logs-body">
         <div v-for="(log, i) in logs" :key="i" :class="['log-item', `log-${log.type}`]">
+          <span class="log-icon">{{ log.type === 'success' ? '✓' : log.type === 'error' ? '✗' : log.type === 'warning' ? '⚠' : '→' }}</span>
           {{ log.text }}
         </div>
       </div>
@@ -262,8 +281,8 @@ const importerImages = async () => {
 .import-page { padding: 0; }
 
 .page-header { margin-bottom: 24px; }
-.page-header h1 { font-size: 24px; font-weight: 700; color: var(--color-text); }
-.subtitle { color: var(--color-muted); font-size: 14px; margin-top: 4px; }
+.page-header h1 { font-size: 24px; font-weight: 700; color: #1e2a3a; }
+.subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
 
 .alert {
   padding: 12px 16px;
@@ -283,26 +302,26 @@ const importerImages = async () => {
 }
 
 .card {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 
 .card-header {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.card-header h3 { font-size: 15px; font-weight: 600; color: var(--color-text); }
+.card-header h3 { font-size: 15px; font-weight: 600; color: #1e2a3a; }
 
 .card-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 
 .file-field { display: flex; flex-direction: column; gap: 6px; }
-.file-field label { font-size: 13px; font-weight: 500; color: var(--color-text); }
+.file-field label { font-size: 13px; font-weight: 500; color: #374151; }
 
 .file-input { display: none; }
 .file-input-wrapper { position: relative; }
@@ -312,7 +331,7 @@ const importerImages = async () => {
   border: 1px dashed #d1d5db;
   border-radius: 8px;
   font-size: 13px;
-  color: var(--color-muted);
+  color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
   background: #f9fafb;
@@ -320,9 +339,9 @@ const importerImages = async () => {
   overflow: hidden;
   white-space: nowrap;
 }
-.file-label:hover { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-dark); }
+.file-label:hover { border-color: #4a9eff; background: #eff6ff; color: #1d4ed8; }
 
-.help-text { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+.help-text { font-size: 13px; color: #6b7280; line-height: 1.6; }
 
 .btn-primary, .btn-secondary {
   padding: 10px 20px;
@@ -334,15 +353,15 @@ const importerImages = async () => {
   transition: all 0.2s;
   width: 100%;
 }
-.btn-primary { background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: #fff; }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.02); }
-.btn-secondary { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid var(--color-border); }
-.btn-secondary:hover:not(:disabled) { background: #d4ead6; }
+.btn-primary { background: #1e2a3a; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #2d3f54; }
+.btn-secondary { background: #f0f4f8; color: #1e2a3a; border: 1px solid #e5e7eb; }
+.btn-secondary:hover:not(:disabled) { background: #e5e7eb; }
 .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Logs */
 .logs-card { margin-top: 0; }
-.log-count { font-size: 12px; color: var(--color-muted); }
+.log-count { font-size: 12px; color: #6b7280; }
 
 .logs-body {
   max-height: 300px;

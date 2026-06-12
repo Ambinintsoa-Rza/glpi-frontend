@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api } from '@/api/glpi'
 import { getKanbanConfig } from '@/api/backend'
 
@@ -35,6 +35,16 @@ const PRIORITY_OPTIONS = [
   { value: 5, label: 'Très haute' }
 ]
 
+const coutTotal = computed(() => {
+  return coutsTicket.value.reduce((total, cout) => {
+    const tauxHoraire = parseFloat(cout.cost_time) || 0
+    const tempsHeures = (parseFloat(cout.duration) || 0) / 3600
+    const coutTemps = tauxHoraire * tempsHeures
+    const coutFixe = parseFloat(cout.cost_fixed) || 0
+    return total + coutTemps + coutFixe
+  }, 0)
+})
+
 // Dialog changement statut
 const showStatusDialog = ref(false)
 const ticketEnDeplacement = ref(null)
@@ -44,9 +54,9 @@ const commentaireResolution = ref('')
 //const STATUS_ID_MAP = { new: 1, progress: 2, closed: 6 }
 
 const COLONNES = ref([
-  { id: 'new',      label: 'Nouveau',    statusId: 1, color: '#dff1e2', headerColor: '#5ca96a', labelMalgache: 'Vaovao' },
-  { id: 'progress', label: 'In Progress', statusId: 2, color: '#eaf6e8', headerColor: '#69b676', labelMalgache: 'Efa manao' },
-  { id: 'closed',   label: 'Terminé',    statusId: 6, color: '#cfe8d3', headerColor: '#4e8d5b', labelMalgache: 'Vita' },
+  { id: 'new',      label: 'Nouveau',    statusId: 1, color: '#dbeafe', headerColor: '#3b82f6', labelMalgache: 'Vaovao' },
+  { id: 'progress', label: 'In Progress', statusId: 2, color: '#fef3c7', headerColor: '#f59e0b', labelMalgache: 'Efa manao' },
+  { id: 'closed',   label: 'Terminé',    statusId: 6, color: '#dcfce7', headerColor: '#22c55e', labelMalgache: 'Vita' },
 ])
 
 const ticketsParColonne = (statusId) => tickets.value.filter(t => t.status.id === statusId)
@@ -191,6 +201,7 @@ elementsDisponibles.value = resultats
   <div class="kanban-page">
     <div class="page-header">
       <h1>Kanban Tickets</h1>
+      <p class="subtitle">Glissez les tickets pour changer leur statut</p>
     </div>
 
     <div v-if="loading" class="loading">Chargement...</div>
@@ -232,7 +243,7 @@ elementsDisponibles.value = resultats
 
             <!-- Ajouter ticket -->
             <button v-if="colonne.id==='new'" class="add-ticket-btn" @click="ouvrirCreateDialog(colonne.statusId)">
-              Ajouter un ticket
+              + Ajouter 1 ticket
             </button>
           </div>
         </div>
@@ -242,7 +253,7 @@ elementsDisponibles.value = resultats
       <div v-if="ticketSelectionne" class="fiche-panel">
         <div class="fiche-header">
           <h3>Ticket #{{ ticketSelectionne.id }}</h3>
-          <button class="btn-close" @click="fermerFiche">Fermer</button>
+          <button class="btn-close" @click="fermerFiche">✕</button>
         </div>
         <div class="fiche-body">
           <div class="fiche-title">{{ ticketSelectionne.name }}</div>
@@ -271,8 +282,8 @@ elementsDisponibles.value = resultats
               <span>{{ ticketSelectionne.team.filter(t => t.role === 'assigned').map(t => t.display_name).join(', ') || '-' }}</span>
             </div>
             <div class="fiche-item full">
-              <span class="fiche-label">Date création</span>
-              <span>{{ formatDate(ticketSelectionne.date_creation) }}</span>
+              <span class="fiche-label">Date d'ouverture</span>
+              <span>{{ formatDate(ticketSelectionne.date) }}</span>
             </div>
           </div>
 
@@ -280,9 +291,10 @@ elementsDisponibles.value = resultats
           <div v-if="coutsTicket.length > 0" class="fiche-couts">
             <h4>Coûts</h4>
             <div v-for="(cout, i) in coutsTicket" :key="i" class="cout-row">
-              <span v-if="cout.cost_time">Temps : {{ cout.cost_time }}€</span>
-              <span v-if="cout.cost_fixed">Fixe : {{ cout.cost_fixed }}€</span>
+              <span v-if="cout.cost_time">⏱ {{ ((parseFloat(cout.cost_time) || 0) * (parseFloat(cout.duration) || 0) / 3600).toFixed(2) }}€</span>
+              <span v-if="cout.cost_fixed">📌 {{ cout.cost_fixed }}€</span>
             </div>
+            <div class="cout-total">💰 Total : <strong>{{ coutTotal.toFixed(2) }} €</strong></div>
           </div>
         </div>
       </div>
@@ -293,7 +305,7 @@ elementsDisponibles.value = resultats
       <div class="dialog">
         <div class="dialog-header">
           <h3>Nouveau ticket</h3>
-          <button class="btn-close" @click="showCreateDialog = false">Fermer</button>
+          <button class="btn-close" @click="showCreateDialog = false">✕</button>
         </div>
         <div class="dialog-body">
           <div class="form-group">
@@ -348,7 +360,7 @@ elementsDisponibles.value = resultats
   <div class="dialog">
     <div class="dialog-header">
       <h3>Changer le statut</h3>
-      <button class="btn-close" @click="showStatusDialog = false">Fermer</button>
+      <button class="btn-close" @click="showStatusDialog = false">✕</button>
     </div>
     <div class="dialog-body">
       <p>Déplacer <strong>{{ ticketEnDeplacement?.name }}</strong> vers <strong>{{ nouveauStatut?.label }}</strong> ?</p>
@@ -381,13 +393,22 @@ elementsDisponibles.value = resultats
 </template>
 
 <style scoped>
+.cout-total {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e2a3a;
+}
+
 .kanban-page { padding: 0; }
 
 .page-header { margin-bottom: 24px; }
-.page-header h1 { font-size: 24px; font-weight: 700; color: var(--color-text); }
-.subtitle { color: var(--color-muted); font-size: 14px; margin-top: 4px; }
+.page-header h1 { font-size: 24px; font-weight: 700; color: #1e2a3a; }
+.subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
 
-.loading { text-align: center; padding: 40px; color: var(--color-muted); }
+.loading { text-align: center; padding: 40px; color: #6b7280; }
 
 /* Layout */
 .kanban-layout {
@@ -446,12 +467,12 @@ elementsDisponibles.value = resultats
 
 /* Ticket card */
 .ticket-card {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 8px;
   padding: 12px;
   cursor: grab;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   transition: box-shadow 0.2s, transform 0.1s;
 }
 
@@ -465,7 +486,7 @@ elementsDisponibles.value = resultats
 .ticket-name {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text);
+  color: #1e2a3a;
   margin-bottom: 8px;
 }
 
@@ -478,19 +499,19 @@ elementsDisponibles.value = resultats
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: #f0f4f8;
+  color: #4a5568;
 }
 
 /* Bouton ajouter */
 .add-ticket-btn {
   background: transparent;
-  border: 1px dashed var(--color-primary-dark);
+  border: 1px dashed rgba(0,0,0,0.2);
   border-radius: 8px;
   padding: 10px;
   width: 100%;
   cursor: pointer;
-  color: var(--color-primary-dark);
+  color: rgba(0,0,0,0.5);
   font-size: 13px;
   transition: all 0.2s;
   margin-top: 4px;
@@ -498,16 +519,16 @@ elementsDisponibles.value = resultats
 
 .add-ticket-btn:hover {
   background: rgba(255,255,255,0.5);
-  color: var(--color-text);
+  color: rgba(0,0,0,0.7);
 }
 
 /* Fiche panel */
 .fiche-panel {
   width: 320px;
   flex-shrink: 0;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   height: fit-content;
   position: sticky;
@@ -519,18 +540,18 @@ elementsDisponibles.value = resultats
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.fiche-header h3 { font-size: 15px; font-weight: 600; color: var(--color-text); }
+.fiche-header h3 { font-size: 15px; font-weight: 600; color: #1e2a3a; }
 
 .fiche-body { padding: 20px; }
 
-.fiche-title { font-size: 16px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; }
+.fiche-title { font-size: 16px; font-weight: 600; color: #1e2a3a; margin-bottom: 8px; }
 
 .fiche-content {
   font-size: 14px;
-  color: var(--color-muted);
+  color: #6b7280;
   margin-bottom: 20px;
   padding: 12px;
   background: #f9fafb;
@@ -551,12 +572,12 @@ elementsDisponibles.value = resultats
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-muted);
+  color: #9ca3af;
 }
 
 .status-badge {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: #dbeafe;
+  color: #1d4ed8;
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -565,8 +586,8 @@ elementsDisponibles.value = resultats
 }
 
 .fiche-couts { margin-top: 16px; }
-.fiche-couts h4 { font-size: 13px; color: var(--color-muted); margin-bottom: 8px; }
-.cout-row { display: flex; gap: 12px; font-size: 13px; color: var(--color-text); }
+.fiche-couts h4 { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+.cout-row { display: flex; gap: 12px; font-size: 13px; color: #374151; }
 
 /* Dialogs */
 .dialog-overlay {
@@ -580,7 +601,7 @@ elementsDisponibles.value = resultats
 }
 
 .dialog {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: 12px;
   width: 440px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
@@ -591,10 +612,10 @@ elementsDisponibles.value = resultats
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.dialog-header h3 { font-size: 16px; font-weight: 600; color: var(--color-text); }
+.dialog-header h3 { font-size: 16px; font-weight: 600; color: #1e2a3a; }
 
 .dialog-body { padding: 20px 24px; }
 
@@ -607,19 +628,19 @@ elementsDisponibles.value = resultats
 }
 
 .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.form-group label { font-size: 13px; font-weight: 500; color: var(--color-text); }
+.form-group label { font-size: 13px; font-weight: 500; color: #374151; }
 .form-group input, .form-group textarea {
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
 }
-.form-group input:focus, .form-group textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(92,169,106,0.14); }
+.form-group input:focus, .form-group textarea:focus { border-color: #4a9eff; }
 
 .btn-primary {
-  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: #1e2a3a;
   color: #fff;
   border: none;
   padding: 10px 20px;
@@ -628,45 +649,45 @@ elementsDisponibles.value = resultats
   font-size: 14px;
   font-weight: 500;
 }
-.btn-primary:hover { filter: brightness(1.02); }
+.btn-primary:hover { background: #2d3f54; }
 
 .btn-secondary {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  border: 1px solid var(--color-border);
+  background: #f0f4f8;
+  color: #374151;
+  border: 1px solid #e5e7eb;
   padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
 }
-.btn-secondary:hover { background: #d4ead6; }
+.btn-secondary:hover { background: #e5e7eb; }
 
 .btn-close {
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-border);
+  background: none;
+  border: none;
   cursor: pointer;
-  color: var(--color-primary-dark);
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
-.btn-close:hover { background: #d4ead6; }
+.btn-close:hover { background: #f3f4f6; }
 
 .form-group select {
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
   background: #fff;
   cursor: pointer;
 }
-.form-group select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(92,169,106,0.14); }
+.form-group select:focus { border-color: #4a9eff; }
 
 .elements-list {
   max-height: 160px;
   overflow-y: auto;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 6px;
   display: flex;
@@ -685,6 +706,6 @@ elementsDisponibles.value = resultats
 }
 
 .element-row:hover {
-  background: var(--color-surface-soft);
+  background: #f1f5f9;
 }
 </style>
