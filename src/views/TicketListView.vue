@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { getTickets, supprimerTicket, getCoutTicket } from '@/api/glpi';
 
 const tickets = ref([]);
@@ -10,6 +10,16 @@ const loading = ref(true)
 
 const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute', 6: 'Majeure' }
 const prioriteColors = { 1: '#6b7280', 2: '#3b82f6', 3: '#f59e0b', 4: '#ef4444', 5: '#7c3aed', 6: '#7c3aed' }
+
+const coutTotal = computed(() => {
+  return coutsTicket.value.reduce((total, cout) => {
+    const tauxHoraire = parseFloat(cout.cost_time) || 0
+    const tempsHeures = (parseFloat(cout.duration) || 0) / 3600
+    const coutTemps = tauxHoraire * tempsHeures
+    const coutFixe = parseFloat(cout.cost_fixed) || 0
+    return total + coutTemps + coutFixe
+  }, 0)
+})
 
 const listeTicket = async () => {
   try {
@@ -30,6 +40,7 @@ const voirFiche = async (ticket) => {
     loadingCouts.value = true
     try {
       coutsTicket.value = await getCoutTicket(ticket.id)
+      console.log('COUTS:', JSON.stringify(coutsTicket.value, null, 2))
     } catch (e) {
       console.error(e)
     } finally {
@@ -141,20 +152,25 @@ onMounted(() => listeTicket())
               <span>{{ ticketSelectionne.team.filter(t => t.role === 'assigned').map(t => t.display_name).join(', ') || '-' }}</span>
             </div>
             <div class="fiche-item full">
-              <span class="fiche-label">Date création</span>
-              <span>{{ formatDate(ticketSelectionne.date_creation) }}</span>
+              <span class="fiche-label">Date ouverture</span>
+              <span>{{ formatDate(ticketSelectionne.date) }}</span>
             </div>
             <!-- Coûts -->
           <div class="fiche-section">
             <span class="fiche-label">Coûts</span>
             <div v-if="loadingCouts" class="couts-empty">Chargement...</div>
             <div v-else-if="coutsTicket.length === 0" class="couts-empty">Aucun coût</div>
-            <div v-else class="couts-list">
-              <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
-                <div class="cout-details">
-                  <p><span v-if="cout.cost_time">🕐 Temps : {{ cout.cost_time }} €</span></p>
-                  <span v-if="cout.cost_fixed">📌 Fixe : {{ cout.cost_fixed }} €</span>
+            <div v-else>
+              <div class="couts-list">
+                <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
+                  <div class="cout-details">
+                    <p><span v-if="cout.cost_time">🕐 Temps : {{ cout.cost_time }} €</span></p>
+                    <span v-if="cout.cost_fixed">📌 Fixe : {{ cout.cost_fixed }} €</span> 
+                  </div>
                 </div>
+              </div>
+              <div class="cout-total">
+                💰 Total : <strong>{{ coutTotal.toFixed(2) }} €</strong>
               </div>
             </div>
           </div>
@@ -166,6 +182,15 @@ onMounted(() => listeTicket())
 </template>
 
 <style scoped>
+.cout-total {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e2a3a;
+}
+
 .tickets-page { padding: 0; }
 
 .page-header {

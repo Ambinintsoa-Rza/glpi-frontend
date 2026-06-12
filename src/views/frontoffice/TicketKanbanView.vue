@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api } from '@/api/glpi'
 import { getKanbanConfig } from '@/api/backend'
 
@@ -34,6 +34,16 @@ const PRIORITY_OPTIONS = [
   { value: 4, label: 'Haute' },
   { value: 5, label: 'Très haute' }
 ]
+
+const coutTotal = computed(() => {
+  return coutsTicket.value.reduce((total, cout) => {
+    const tauxHoraire = parseFloat(cout.cost_time) || 0
+    const tempsHeures = (parseFloat(cout.duration) || 0) / 3600
+    const coutTemps = tauxHoraire * tempsHeures
+    const coutFixe = parseFloat(cout.cost_fixed) || 0
+    return total + coutTemps + coutFixe
+  }, 0)
+})
 
 // Dialog changement statut
 const showStatusDialog = ref(false)
@@ -272,8 +282,8 @@ elementsDisponibles.value = resultats
               <span>{{ ticketSelectionne.team.filter(t => t.role === 'assigned').map(t => t.display_name).join(', ') || '-' }}</span>
             </div>
             <div class="fiche-item full">
-              <span class="fiche-label">Date création</span>
-              <span>{{ formatDate(ticketSelectionne.date_creation) }}</span>
+              <span class="fiche-label">Date d'ouverture</span>
+              <span>{{ formatDate(ticketSelectionne.date) }}</span>
             </div>
           </div>
 
@@ -281,9 +291,10 @@ elementsDisponibles.value = resultats
           <div v-if="coutsTicket.length > 0" class="fiche-couts">
             <h4>Coûts</h4>
             <div v-for="(cout, i) in coutsTicket" :key="i" class="cout-row">
-              <span v-if="cout.cost_time">⏱ {{ cout.cost_time }}€</span>
+              <span v-if="cout.cost_time">⏱ {{ ((parseFloat(cout.cost_time) || 0) * (parseFloat(cout.duration) || 0) / 3600).toFixed(2) }}€</span>
               <span v-if="cout.cost_fixed">📌 {{ cout.cost_fixed }}€</span>
             </div>
+            <div class="cout-total">💰 Total : <strong>{{ coutTotal.toFixed(2) }} €</strong></div>
           </div>
         </div>
       </div>
@@ -382,6 +393,15 @@ elementsDisponibles.value = resultats
 </template>
 
 <style scoped>
+.cout-total {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e2a3a;
+}
+
 .kanban-page { padding: 0; }
 
 .page-header { margin-bottom: 24px; }
