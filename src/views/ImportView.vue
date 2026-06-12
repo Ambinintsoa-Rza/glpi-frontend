@@ -3,7 +3,7 @@ import JSZip from 'jszip'
 import { ref } from 'vue'
 import Papa from 'papaparse'
 import { creerAsset, creerCoutTicket, uploadDocumentAsset, trouverTicketParRef } from '@/api/import'
-import { newTicket, associerElementTicket } from '@/api/glpi'
+import { newTicket, associerElementTicket, changerStatutFinal } from '@/api/glpi'
 
 const message = ref('')
 const messageType = ref('') // success | error
@@ -11,7 +11,7 @@ const loading = ref(false)
 const loadingImages = ref(false)
 const logs = ref([])
 
-const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2, 'In progress(assigned)': 2, 'In progress (assigned)' : 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
+const STATUS_MAP = { 'New': 1, 'Validation': 10, 'Assigned': 2,'In progress' : 2, 'In progress(assigned)': 2, 'In progress (assigned)' : 2 ,'In Progress' : 2, 'In Progress(assigned)': 2, 'In Progress (assigned)' : 2, 'Planified': 3, 'Pending': 4, 'Solved': 5, 'Closed': 6 }
 const PRIORITY_MAP = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4, 'Very High': 5, 'Major': 6, 'Critical' : 6 }
 const TYPE_MAP = { 'Incident': 1, 'Request': 2, 'Demande': 2 }
 
@@ -61,16 +61,18 @@ const importer = async () => {
     const ticketsMap = {}
     for (const ticket of tickets) {
       try {
-        // 🔍 Vérifier doublon : on cherche un ticket dont le name commence par [Ref_Ticket]
+        // 🔍 Vérifier doublon
         const existant = await trouverTicketParRef(`[${ticket.Ref_Ticket}]`)
-        
         if (existant) {
           ticketsMap[ticket.Ref_Ticket] = existant.id
           addLog(`Ticket ignoré (doublon) : ${ticket.Ref_Ticket}`, 'warning')
           continue
         }
 
-        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, STATUS_MAP[ticket.Status] || 1, PRIORITY_MAP[ticket.Priority] || 3)
+        const statusFinal = STATUS_MAP[ticket.Status] || 1
+
+        // Toujours créer en "New" pour pouvoir associer les assets sans 400
+        const created = await newTicket(`[${ticket.Ref_Ticket}] ${ticket.Titre}`, ticket.Description, TYPE_MAP[ticket.Type] || 1, 1, PRIORITY_MAP[ticket.Priority] || 3)
         ticketsMap[ticket.Ref_Ticket] = created.id
         addLog(`Ticket créé : ${ticket.Titre}`, 'success')
 
@@ -81,6 +83,11 @@ const importer = async () => {
             await associerElementTicket(created.id, asset.type, asset.id)
             addLog(`→ Asset ${itemName} associé`, 'info')
           }
+        }
+
+        if (statusFinal !== 1) {
+          const solution = [5, 6].includes(statusFinal) ? (ticket.Solution || 'Résolu') : null
+          await changerStatutFinal(created.id, statusFinal, solution)
         }
       } catch (e) {
         addLog(`Erreur ticket ${ticket.Titre}: ${e.message}`, 'error')

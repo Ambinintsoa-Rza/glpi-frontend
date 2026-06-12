@@ -92,6 +92,14 @@ export const newTicket = async (titre, description, type = 1, status = 1, priori
   return response.data
 }
 
+export const changerStatutFinal = async (ticketId, status, solution = null) => {
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN, 'Content-Type': 'application/json' }
+  const input = { status }
+  if (solution) input.solution = solution
+  await axios.put(`${LEGACY_URL}/Ticket/${ticketId}`, { input }, { headers })
+}
+
 //supprimer ticket
 export const supprimerTicket = async(id) => {
   const response = await api.delete(`/Assistance/Ticket/${id}`);
