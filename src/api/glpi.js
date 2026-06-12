@@ -194,3 +194,25 @@ export const changerStatutTicket = async (ticketId, statusId, options = {}) => {
     }, { headers })
   }
 }
+
+// Récupérer les associations ticket pour un élément
+export const getTicketsByItem = async (itemtype, itemId) => {
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+  const response = await axios.get(
+    `${LEGACY_URL}/${itemtype}/${itemId}/Item_Ticket`,
+    { headers }
+  )
+  return response.data || []
+}
+
+// Compter le nombre total d'éléments associés à un ticket
+export const getItemsCountByTicket = async (ticketId) => {
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+  const response = await axios.get(
+    `${LEGACY_URL}/Ticket/${ticketId}/Item_Ticket`,
+    { headers }
+  )
+  return response.data?.length || 0
+}

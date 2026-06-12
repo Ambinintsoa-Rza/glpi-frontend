@@ -16,3 +16,7 @@ export const supprimerAssetLocal = (id) => backend.delete(`/assets/${id}`)
 // Kanban config
 export const getKanbanConfig = () => backend.get('/kanban-config')
 export const updateKanbanConfig = (statusId, config) => backend.put(`/kanban-config/${statusId}`, config)
+
+// Super coûts
+export const getSuperCouts = (ticketId) => backend.get(`/super-couts/${ticketId}`)
+export const creerSuperCout = (data) => backend.post('/super-couts', data)

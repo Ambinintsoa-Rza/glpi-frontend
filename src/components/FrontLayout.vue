@@ -19,6 +19,9 @@
         <router-link to="/Front/TicketKanban" class="front-nav-item">
         <span>🎫</span>Tickets
         </router-link>
+        <router-link to="/Detail" class="front-nav-item">
+        <span>🎫</span>Details
+        </router-link>
       </nav>
     </aside>
 
