@@ -1,13 +1,18 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api } from '@/api/glpi'
-import { getKanbanConfig } from '@/api/backend'
+import { getKanbanConfig, getSuperCouts, creerSuperCout } from '@/api/backend'
 
 const tickets = ref([])
 const loading = ref(true)
 const ticketSelectionne = ref(null)
 const coutsTicket = ref([])
 const loadingCouts = ref(false)
+
+// Nouveau ref
+const superCoutMontant = ref('')
+const superCoutCommentaire = ref('')
+const superCoutsTicket = ref([])
 
 // Dialog création
 const showCreateDialog = ref(false)
@@ -75,6 +80,8 @@ const onDrop = (colonne) => {
   ticketEnDeplacement.value = ticketDragged.value
   nouveauStatut.value = colonne
   commentaireResolution.value = ''
+  superCoutMontant.value = ''
+  superCoutCommentaire.value = ''
   showStatusDialog.value = true
   ticketDragged.value = null
 }
@@ -88,9 +95,21 @@ const confirmerChangementStatut = async () => {
       technicienId: technicienSelectionne.value || null,
       solution: commentaireResolution.value || null
     })
+
+    // Enregistrer le super coût si statut "Terminé" et montant renseigné
+    if (nouveauStatut.value.statusId === 6 && superCoutMontant.value) {
+      await creerSuperCout({
+        ticketId: ticketEnDeplacement.value.id,
+        montant: parseFloat(superCoutMontant.value),
+        commentaire: superCoutCommentaire.value || null
+      })
+    }
+
     await listeTicket()
     showStatusDialog.value = false
     technicienSelectionne.value = ''
+    superCoutMontant.value = ''
+    superCoutCommentaire.value = ''
   } catch(e) {
     console.error(e)
   }
@@ -381,6 +400,13 @@ elementsDisponibles.value = resultats
         <label>Solution / Commentaire de résolution</label>
         <textarea v-model="commentaireResolution" rows="3" placeholder="Décrivez la solution apportée..." />
       </div>
+
+<!-- Super coût si on passe à "Terminé" -->
+<div v-if="nouveauStatut?.statusId === 6" class="form-group" style="margin-top: 16px">
+  <label>💎 Super coût (optionnel)</label>
+  <input v-model="superCoutMontant" type="number" step="0.01" placeholder="Montant en €" />
+  <input v-model="superCoutCommentaire" type="text" placeholder="Commentaire (optionnel)" style="margin-top: 8px" />
+</div>
     </div>
     <div class="dialog-footer">
       <button class="btn-secondary" @click="showStatusDialog = false">Annuler</button>
