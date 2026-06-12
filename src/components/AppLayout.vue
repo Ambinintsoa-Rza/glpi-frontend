@@ -13,61 +13,43 @@ const logout = () => {
 
 <template>
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-logo">
-        <span>🖥️ GLPI App</span>
-      </div>
+      <div class="sidebar-logo">GLPI App</div>
 
       <nav class="sidebar-nav">
-        <p class="nav-section">Tableau de bord</p>
         <router-link to="/home" class="nav-item">
-          <span>📊</span> Dashboard
+          Dashboard
         </router-link>
 
-        <p class="nav-section">Assistance</p>
         <router-link to="/ticketList" class="nav-item">
-          <span>🎫</span> Tickets
+          Tickets
         </router-link>
-        <!-- <router-link to="/Front/CreateTicket" class="nav-item">
-          <span>➕</span> Nouveau ticket
-        </router-link> -->
 
-        <!-- <p class="nav-section">Parc</p>
-        <router-link to="/client" class="nav-item">
-          <span>👥</span> Utilisateurs
-        </router-link> -->
-
-        <p class="nav-section">Administration</p>
         <router-link to="/import" class="nav-item">
-          <span>📂</span> Import données
+          Import donnees
         </router-link>
         <router-link to="/reset-data" class="nav-item danger">
-          <span>🗑️</span> Réinitialiser
+          Reinitialiser
         </router-link>
         <router-link to="/Kanban/parametre" class="nav-item">
-          <span>⚙️</span>Paramètres Kanban
+          Parametres Kanban
         </router-link>
-        <!-- <router-link to="/Back" class="nav-item">
-          <span>🗄️</span> Backend SQLite
-        </router-link> -->
       </nav>
 
       <div class="sidebar-footer">
         <button @click="logout" class="logout-btn">
-          <span>🚪</span> Déconnexion
+          Deconnexion
         </button>
       </div>
     </aside>
 
-    <!-- Contenu principal -->
     <div class="main-wrapper">
       <header class="topbar">
         <h1 class="page-title">
-          <router-link to="/home">GLPI Frontend</router-link>
+          <router-link to="/home">GLPI</router-link>
         </h1>
         <div class="topbar-right">
-          <span class="user-badge">👤 glpi</span>
+          <span class="user-badge">glpi</span>
         </div>
       </header>
 
@@ -83,26 +65,27 @@ const logout = () => {
 
 .app-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   font-family: 'Segoe UI', sans-serif;
-  background: #f4f6f9;
+  background: transparent;
+  color: var(--color-text);
 }
 
-/* Sidebar */
 .sidebar {
   width: 240px;
-  background: #1e2a3a;
+  background: linear-gradient(180deg, #5ca96a 0%, #458554 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-logo {
   padding: 24px 20px;
   font-size: 18px;
   font-weight: 700;
-  border-bottom: 1px solid #2d3f54;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   letter-spacing: 0.5px;
 }
 
@@ -112,20 +95,11 @@ const logout = () => {
   overflow-y: auto;
 }
 
-.nav-section {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #6b8097;
-  padding: 16px 20px 6px;
-}
-
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 10px 20px;
-  color: #a8bfd0;
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-size: 14px;
   transition: all 0.2s;
@@ -133,51 +107,46 @@ const logout = () => {
 }
 
 .nav-item:hover {
-  background: #2d3f54;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
 
 .nav-item.router-link-active {
-  background: #2d3f54;
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  border-left-color: #4a9eff;
+  border-left-color: #e9ffe9;
 }
 
 .nav-item.danger {
-  color: #e57373;
+  color: #ffe8e8;
 }
 
 .nav-item.danger:hover {
-  background: #3a2020;
-  color: #ff6b6b;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
 }
 
 .sidebar-footer {
   padding: 16px;
-  border-top: 1px solid #2d3f54;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .logout-btn {
   width: 100%;
   padding: 10px;
-  background: transparent;
-  border: 1px solid #2d3f54;
-  color: #a8bfd0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   transition: all 0.2s;
 }
 
 .logout-btn:hover {
-  background: #2d3f54;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
 }
 
-/* Topbar */
 .main-wrapper {
   flex: 1;
   display: flex;
@@ -186,32 +155,32 @@ const logout = () => {
 }
 
 .topbar {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.88);
   padding: 0 24px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e0e6ed;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  backdrop-filter: blur(8px);
 }
 
 .page-title a {
   font-size: 16px;
   font-weight: 600;
-  color: #1e2a3a;
+  color: var(--color-text);
   text-decoration: none;
 }
 
 .user-badge {
-  background: #f0f4f8;
+  background: var(--color-primary-soft);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
-  color: #4a5568;
+  color: var(--color-text);
 }
 
-/* Contenu */
 .main-content {
   flex: 1;
   padding: 24px;

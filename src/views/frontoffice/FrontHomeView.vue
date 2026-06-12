@@ -78,14 +78,11 @@ onMounted(async() => {
 
     <div class="page-header">
       <h1>Inventaire GLPI</h1>
-      <p class="subtitle">
-        Consultez et recherchez les équipements enregistrés.
-      </p>
     </div>
 
     <div class="card filters-card">
       <div class="card-header">
-        <h3>🔍 Recherche d'éléments</h3>
+        <h3>Recherche d'éléments</h3>
       </div>
 
       <div class="card-body">
@@ -110,38 +107,38 @@ onMounted(async() => {
         <div class="search-grid">
           <input
             v-model="rechercheNom"
-            placeholder="🔎 Rechercher par nom"
+            placeholder="Rechercher par nom"
           />
 
           <input
             v-model="rechercheSerial"
-            placeholder="🔢 Numéro de série"
+            placeholder="Numéro de série"
           />
 
           <input
             v-model="rechercheEntite"
-            placeholder="🏢 Entité"
+            placeholder="Entité"
           />
 
           <input
             v-model="rechercheStatus"
-            placeholder=" Status"
+            placeholder="Statut"
           />
           
 
           <input
             v-model="rechercheManufacturer"
-            placeholder=" Fabricant"
+            placeholder="Fabricant"
           />
 
           <input
             v-model="rechercheModel"
-            placeholder=" Molèle"
+            placeholder="Modèle"
           />
 
           <input
             v-model="rechercheSerialNumber"
-            placeholder=" Numéro d'inventaire"
+            placeholder="Numéro d'inventaire"
           />
           
         </div>
@@ -152,7 +149,7 @@ onMounted(async() => {
     <div class="card table-card">
 
       <div class="card-header">
-        <h3>📦 Liste des éléments</h3>
+        <h3>Liste des éléments</h3>
         <span class="count-badge">
           {{ itemsFiltres.length }} résultat(s)
         </span>
@@ -203,7 +200,7 @@ onMounted(async() => {
       to="/Front/CreateTicket"
       class="create-ticket-btn"
     >
-      🎫 Créer un ticket
+      Créer un ticket
     </router-link>
 
   </div>
@@ -221,19 +218,19 @@ onMounted(async() => {
 .page-header h1 {
   font-size: 24px;
   font-weight: 700;
-  color: #1e2a3a;
+  color: var(--color-text);
 }
 
 .subtitle {
   margin-top: 4px;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 14px;
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
   margin-bottom: 20px;
@@ -241,7 +238,7 @@ onMounted(async() => {
 
 .card-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -250,7 +247,7 @@ onMounted(async() => {
 .card-header h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #1e2a3a;
+  color: var(--color-text);
 }
 
 .card-body {
@@ -273,7 +270,7 @@ select,
 input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
 }
@@ -281,8 +278,8 @@ input {
 select:focus,
 input:focus {
   outline: none;
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 3px rgba(74,158,255,0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(92,169,106,0.14);
 }
 
 .search-grid {
@@ -292,8 +289,8 @@ input:focus {
 }
 
 .count-badge {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -310,7 +307,7 @@ table {
 }
 
 thead {
-  background: #f9fafb;
+  background: var(--color-surface-soft);
 }
 
 th {
@@ -318,8 +315,8 @@ th {
   padding: 14px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
 }
 
 td {
@@ -329,7 +326,7 @@ td {
 }
 
 tbody tr:hover {
-  background: #f9fafb;
+  background: var(--color-surface-soft);
 }
 
 .empty {
@@ -341,7 +338,7 @@ tbody tr:hover {
 .create-ticket-btn {
   display: inline-block;
   padding: 12px 20px;
-  background: #1e2a3a;
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: white;
   text-decoration: none;
   border-radius: 8px;
@@ -350,7 +347,7 @@ tbody tr:hover {
 }
 
 .create-ticket-btn:hover {
-  background: #2d3f54;
+  filter: brightness(1.02);
 }
 
 @media (max-width: 768px) {

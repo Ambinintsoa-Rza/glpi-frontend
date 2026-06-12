@@ -3,30 +3,23 @@
 
 <template>
   <div class="front-layout">
-    <!-- Sidebar frontoffice -->
     <aside class="front-sidebar">
-      <div class="front-logo">
-        <span>🎫 Helpdesk</span>
-      </div>
+      <div class="front-logo">Helpdesk</div>
 
       <nav class="front-nav">
         <router-link to="/Front/Home" class="front-nav-item">
-          <span>🏠</span> Accueil
+          Accueil
         </router-link>
         <router-link to="/Front/CreateTicket" class="front-nav-item">
-          <span>➕</span> Nouveau ticket
+          Nouveau ticket
         </router-link>
         <router-link to="/Front/TicketKanban" class="front-nav-item">
-        <span>🎫</span>Tickets
+          Tickets
         </router-link>
       </nav>
     </aside>
 
-    <!-- Contenu -->
     <div class="front-main-wrapper">
-      <header class="front-topbar">
-        <h1 class="front-title">Portail Helpdesk</h1>
-      </header>
       <main class="front-content">
         <slot />
       </main>
@@ -39,25 +32,27 @@
 
 .front-layout {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   font-family: 'Segoe UI', sans-serif;
-  background: #f4f6f9;
+  background: transparent;
+  color: var(--color-text);
 }
 
 .front-sidebar {
   width: 240px;
-  background: #2c5f8a;
+  background: linear-gradient(180deg, #6cba78 0%, #4e8d5b 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
 .front-logo {
   padding: 24px 20px;
   font-size: 18px;
   font-weight: 700;
-  border-bottom: 1px solid #3a7ab5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .front-nav {
@@ -68,9 +63,8 @@
 .front-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 12px 20px;
-  color: #cde4f5;
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-size: 14px;
   transition: all 0.2s;
@@ -78,30 +72,14 @@
 }
 
 .front-nav-item:hover {
-  background: #3a7ab5;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
 
 .front-nav-item.router-link-active {
-  background: #3a7ab5;
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  border-left-color: #90cdf4;
-}
-
-.front-topbar {
-  background: #fff;
-  padding: 0 24px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #e0e6ed;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.front-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c5f8a;
+  border-left-color: #e9ffe9;
 }
 
 .front-main-wrapper {

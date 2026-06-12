@@ -32,9 +32,6 @@ const reinitialiser = async () => {
 
     <div class="page-header">
       <h1>Réinitialisation des données</h1>
-      <p class="subtitle">
-        Supprimez toutes les données importées et revenez à un état vierge.
-      </p>
     </div>
 
     <!-- Message -->
@@ -52,7 +49,7 @@ const reinitialiser = async () => {
 
     <div class="card danger-card">
       <div class="card-header">
-        <h3>⚠️ Zone sensible</h3>
+        <h3>Zone sensible</h3>
       </div>
 
       <div class="card-body">
@@ -78,11 +75,10 @@ const reinitialiser = async () => {
           @click="reinitialiser"
           :disabled="loading"
         >
-          {{ loading ? '⏳ Réinitialisation...' : '🗑️ Réinitialiser les données' }}
+          {{ loading ? 'Réinitialisation...' : 'Réinitialiser les données' }}
         </button>
       <div v-if="logs.length > 0" class="logs-body">
         <div v-for="(log, i) in logs" :key="i" :class="['log-item', `log-${log.type}`]">
-          <span class="log-icon">{{ log.type === 'success' ? '✓' : log.type === 'error' ? '✗' : '→' }}</span>
           {{ log.text }}
         </div>
       </div>
@@ -91,7 +87,7 @@ const reinitialiser = async () => {
           to="/import-data"
           class="back-link"
         >
-          ← Retour à l'importation
+          Retour à l'importation
         </router-link>
       </div>
     </div>
@@ -111,13 +107,7 @@ const reinitialiser = async () => {
 .page-header h1 {
   font-size: 24px;
   font-weight: 700;
-  color: #1e2a3a;
-}
-
-.subtitle {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
+  color: var(--color-text);
 }
 
 /* Alertes */
@@ -143,9 +133,9 @@ const reinitialiser = async () => {
 
 /* Carte */
 .card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
 }
@@ -228,7 +218,7 @@ const reinitialiser = async () => {
 /* Lien retour */
 .back-link {
   text-decoration: none;
-  color: #2563eb;
+  color: var(--color-primary-dark);
   font-size: 14px;
   font-weight: 500;
   text-align: center;
@@ -241,7 +231,7 @@ const reinitialiser = async () => {
 .logs-body {
   max-height: 250px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 4px 0;
 }

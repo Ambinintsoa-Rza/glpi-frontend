@@ -9,7 +9,7 @@ const ticketSelectionne = ref(null)
 const loading = ref(true)
 
 const prioriteLabels = { 1: 'Très basse', 2: 'Basse', 3: 'Moyenne', 4: 'Haute', 5: 'Très haute' }
-const prioriteColors = { 1: '#6b7280', 2: '#3b82f6', 3: '#f59e0b', 4: '#ef4444', 5: '#7c3aed' }
+const prioriteColors = { 1: '#64748b', 2: '#7aa97f', 3: '#9ccf9e', 4: '#d97706', 5: '#dc2626' }
 
 const listeTicket = async () => {
   try {
@@ -64,9 +64,8 @@ onMounted(() => listeTicket())
     <div class="page-header">
       <div>
         <h1>Tickets</h1>
-        <p class="subtitle">{{ tickets.length }} ticket(s) actif(s)</p>
       </div>
-      <router-link to="/Front/CreateTicket" class="btn-primary">➕ Nouveau ticket</router-link>
+      <router-link to="/Front/CreateTicket" class="btn-primary">Nouveau ticket</router-link>
     </div>
 
     <div class="content-layout" :class="{ 'with-fiche': ticketSelectionne }">
@@ -101,7 +100,7 @@ onMounted(() => listeTicket())
               </td>
               <td class="date-cell">{{ formatDate(ticket.date_creation) }}</td>
               <td @click.stop>
-                <button class="btn-icon btn-danger" @click="SupprimerTicket(ticket.id)" title="Supprimer">🗑️</button>
+                <button class="btn-icon btn-danger" @click="SupprimerTicket(ticket.id)" title="Supprimer">Supprimer</button>
               </td>
             </tr>
           </tbody>
@@ -112,7 +111,7 @@ onMounted(() => listeTicket())
       <div v-if="ticketSelectionne" class="fiche-card">
         <div class="fiche-header">
           <h3>Ticket #{{ ticketSelectionne.id }}</h3>
-          <button class="btn-close" @click="fermerFiche">✕</button>
+          <button class="btn-close" @click="fermerFiche">Fermer</button>
         </div>
         <div class="fiche-body">
           <div class="fiche-title">{{ ticketSelectionne.name }}</div>
@@ -152,8 +151,8 @@ onMounted(() => listeTicket())
             <div v-else class="couts-list">
               <div v-for="cout in coutsTicket" :key="cout.id" class="cout-row">
                 <div class="cout-details">
-                  <p><span v-if="cout.cost_time">🕐 Temps : {{ cout.cost_time }} €</span></p>
-                  <span v-if="cout.cost_fixed">📌 Fixe : {{ cout.cost_fixed }} €</span>
+                  <p><span v-if="cout.cost_time">Temps : {{ cout.cost_time }} €</span></p>
+                  <span v-if="cout.cost_fixed">Fixe : {{ cout.cost_fixed }} €</span>
                 </div>
               </div>
             </div>
@@ -175,11 +174,10 @@ onMounted(() => listeTicket())
   margin-bottom: 24px;
 }
 
-.page-header h1 { font-size: 24px; font-weight: 700; color: #1e2a3a; }
-.subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
+.page-header h1 { font-size: 24px; font-weight: 700; color: var(--color-text); }
 
 .btn-primary {
-  background: #1e2a3a;
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #fff;
   padding: 10px 18px;
   border-radius: 8px;
@@ -188,7 +186,7 @@ onMounted(() => listeTicket())
   font-weight: 500;
   transition: background 0.2s;
 }
-.btn-primary:hover { background: #2d3f54; }
+.btn-primary:hover { filter: brightness(1.02); }
 
 /* Layout */
 .content-layout {
@@ -203,14 +201,14 @@ onMounted(() => listeTicket())
 
 /* Card */
 .card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 
-.empty { padding: 40px; text-align: center; color: #9ca3af; }
+.empty { padding: 40px; text-align: center; color: var(--color-muted); }
 
 /* Table */
 .ticket-table {
@@ -224,29 +222,29 @@ onMounted(() => listeTicket())
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #6b7280;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-muted);
+  background: var(--color-surface-soft);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ticket-table td {
   padding: 12px 16px;
   font-size: 14px;
-  color: #374151;
-  border-bottom: 1px solid #f3f4f6;
+  color: var(--color-text);
+  border-bottom: 1px solid #edf4ed;
 }
 
-.ticket-table tr:hover td { background: #f9fafb; cursor: pointer; }
-.ticket-table tr.active td { background: #eff6ff; }
+.ticket-table tr:hover td { background: var(--color-surface-soft); cursor: pointer; }
+.ticket-table tr.active td { background: var(--color-primary-soft); }
 
-.id-cell { color: #9ca3af; font-size: 13px; }
-.title-cell { font-weight: 500; color: #1e2a3a; }
-.date-cell { font-size: 13px; color: #6b7280; }
+.id-cell { color: var(--color-muted); font-size: 13px; }
+.title-cell { font-weight: 500; color: var(--color-text); }
+.date-cell { font-size: 13px; color: var(--color-muted); }
 
 /* Badges */
 .status-badge {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -266,18 +264,19 @@ onMounted(() => listeTicket())
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   transition: background 0.2s;
 }
-.btn-danger:hover { background: #fee2e2; }
+.btn-danger:hover { background: var(--color-danger-soft); }
 
 /* Fiche */
 .fiche-card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   height: fit-content;
   position: sticky;
@@ -289,34 +288,34 @@ onMounted(() => listeTicket())
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.fiche-header h3 { font-size: 15px; font-weight: 600; color: #1e2a3a; }
+.fiche-header h3 { font-size: 15px; font-weight: 600; color: var(--color-text); }
 
 .btn-close {
-  background: none;
-  border: none;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-border);
   cursor: pointer;
-  color: #9ca3af;
-  font-size: 16px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
 }
-.btn-close:hover { background: #f3f4f6; color: #374151; }
+.btn-close:hover { background: #d4ead6; color: var(--color-text); }
 
 .fiche-body { padding: 20px; }
 
 .fiche-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e2a3a;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
 .fiche-content {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-muted);
   margin-bottom: 20px;
   padding: 12px;
   background: #f9fafb;
@@ -342,27 +341,27 @@ onMounted(() => listeTicket())
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #9ca3af;
+  color: var(--color-muted);
 }
 
 .fiche-section { margin-top: 16px; }
 
 .couts-loading, .couts-empty {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-muted);
   margin-top: 6px;
 }
 
 .couts-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 
 .cout-row {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px 14px;
 }
 
-.cout-name { font-size: 13px; font-weight: 600; color: #1e2a3a; }
+.cout-name { font-size: 13px; font-weight: 600; color: var(--color-text); }
 
 .cout-details {
   display: flex;
@@ -371,5 +370,5 @@ onMounted(() => listeTicket())
   flex-wrap: wrap;
 }
 
-.cout-details span { font-size: 12px; color: #4b5563; }
+.cout-details span { font-size: 12px; color: var(--color-muted); }
 </style>

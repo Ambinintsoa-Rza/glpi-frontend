@@ -1,0 +1,45 @@
+:root {
+  --color-bg: #eef8ee;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f7fbf7;
+  --color-border: #d8e8d8;
+  --color-text: #18311f;
+  --color-muted: #617162;
+  --color-primary: #5ca96a;
+  --color-primary-dark: #468654;
+  --color-primary-soft: #dff1e2;
+  --color-danger: #c05d5d;
+  --color-danger-soft: #f8e6e6;
+  --color-shadow: 0 10px 28px rgba(46, 88, 52, 0.08);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--color-text);
+  background:
+    radial-gradient(circle at top left, rgba(92, 169, 106, 0.12), transparent 30%),
+    linear-gradient(180deg, #f4fbf4 0%, var(--color-bg) 100%);
+}
+
+a {
+  color: var(--color-primary-dark);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}

@@ -3,9 +3,9 @@ import { ref, onMounted } from 'vue'
 import { getKanbanConfig, updateKanbanConfig } from '@/api/backend'
 
 const DEFAULTS = [
-  { statusId: 'new',      label: 'Nouveau',    couleur: '#dbeafe', couleurHeader: '#3b82f6', labelMalgache: 'Vaovao' },
-  { statusId: 'progress', label: 'In Progress', couleur: '#fef3c7', couleurHeader: '#f59e0b', labelMalgache: 'Efa manao' },
-  { statusId: 'closed',   label: 'Terminé',    couleur: '#dcfce7', couleurHeader: '#22c55e', labelMalgache: 'Vita' },
+  { statusId: 'new',      label: 'Nouveau',    couleur: '#dff1e2', couleurHeader: '#5ca96a', labelMalgache: 'Vaovao' },
+  { statusId: 'progress', label: 'In Progress', couleur: '#eaf6e8', couleurHeader: '#69b676', labelMalgache: 'Efa manao' },
+  { statusId: 'closed',   label: 'Terminé',    couleur: '#cfe8d3', couleurHeader: '#4e8d5b', labelMalgache: 'Vita' },
 ]
 
 const configs = ref(DEFAULTS.map(d => ({ ...d })))
@@ -46,10 +46,9 @@ const sauvegarder = async () => {
   <div class="params-page">
     <div class="page-header">
       <h1>Paramètres Kanban</h1>
-      <p class="subtitle">Personnalisez les couleurs et les labels en malgache</p>
     </div>
 
-    <div v-if="saved" class="alert alert-success">✓ Sauvegardé avec succès !</div>
+    <div v-if="saved" class="alert alert-success">Sauvegardé avec succès !</div>
 
     <div class="configs-grid">
       <div v-for="config in configs" :key="config.statusId" class="card">
@@ -88,7 +87,7 @@ const sauvegarder = async () => {
     </div>
 
     <button class="btn-primary" @click="sauvegarder" :disabled="saving">
-      {{ saving ? '⏳ Sauvegarde...' : '💾 Sauvegarder' }}
+      {{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}
     </button>
   </div>
 </template>
@@ -96,12 +95,11 @@ const sauvegarder = async () => {
 <style scoped>
 .params-page { padding: 0; }
 .page-header { margin-bottom: 24px; }
-.page-header h1 { font-size: 24px; font-weight: 700; color: #1e2a3a; }
-.subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
+.page-header h1 { font-size: 24px; font-weight: 700; color: var(--color-text); }
 
 .alert-success {
-  background: #dcfce7; color: #166534;
-  border: 1px solid #bbf7d0;
+  background: var(--color-primary-soft); color: var(--color-primary-dark);
+  border: 1px solid var(--color-border);
   padding: 12px 16px; border-radius: 8px;
   margin-bottom: 20px; font-size: 14px;
 }
@@ -113,7 +111,7 @@ const sauvegarder = async () => {
   margin-bottom: 20px;
 }
 
-.card { border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; background: #fff; }
+.card { border-radius: 10px; border: 1px solid var(--color-border); overflow: hidden; background: var(--color-surface); }
 
 .card-header {
   padding: 14px 18px;
@@ -131,12 +129,12 @@ const sauvegarder = async () => {
 .card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
 .form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label { font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; }
+.form-group label { font-size: 12px; font-weight: 500; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.4px; }
 .form-group input[type="text"] {
-  padding: 8px 12px; border: 1px solid #d1d5db;
+  padding: 8px 12px; border: 1px solid var(--color-border);
   border-radius: 8px; font-size: 14px; outline: none;
 }
-.form-group input[type="text"]:focus { border-color: #4a9eff; }
+.form-group input[type="text"]:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(92,169,106,0.14); }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -144,18 +142,18 @@ const sauvegarder = async () => {
 
 .color-picker {
   width: 40px; height: 36px;
-  border: 1px solid #d1d5db; border-radius: 6px;
+  border: 1px solid var(--color-border); border-radius: 6px;
   padding: 2px; cursor: pointer; background: #fff;
 }
 
-.color-text { flex: 1; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; }
+.color-text { flex: 1; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; font-size: 13px; }
 
 .btn-primary {
-  background: #1e2a3a; color: #fff;
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: #fff;
   border: none; padding: 12px 28px;
   border-radius: 8px; cursor: pointer;
   font-size: 14px; font-weight: 500;
 }
-.btn-primary:hover:not(:disabled) { background: #2d3f54; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.02); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

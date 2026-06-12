@@ -108,15 +108,12 @@ onMounted(() => {
 
     <div class="page-header">
       <h1>Création d'un ticket</h1>
-      <p class="subtitle">
-        Déclarez un incident ou une demande et associez des équipements.
-      </p>
     </div>
 
     <!-- Formulaire -->
     <div class="card">
       <div class="card-header">
-        <h3>🎫 Informations du ticket</h3>
+        <h3>Informations du ticket</h3>
       </div>
 
       <div class="card-body">
@@ -172,7 +169,7 @@ onMounted(() => {
           class="btn-primary"
           @click="nouveauTicket"
         >
-          🎫 Créer le ticket
+          Créer le ticket
         </button>
 
       </div>
@@ -181,7 +178,7 @@ onMounted(() => {
     <!-- Liste des éléments -->
     <div class="card">
       <div class="card-header">
-        <h3>📦 Équipements disponibles</h3>
+        <h3>Équipements disponibles</h3>
 
         <span class="count-badge">
           {{ elementsSelectionnes.length }} sélectionné(s)
@@ -230,7 +227,7 @@ onMounted(() => {
       class="card"
     >
       <div class="card-header">
-        <h3>✅ Éléments associés</h3>
+        <h3>Éléments associés</h3>
       </div>
 
       <div class="card-body">
@@ -261,19 +258,19 @@ onMounted(() => {
 .page-header h1 {
   font-size: 24px;
   font-weight: 700;
-  color: #1e2a3a;
+  color: var(--color-text);
 }
 
 .subtitle {
   margin-top: 4px;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 14px;
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   overflow: hidden;
   margin-bottom: 20px;
@@ -281,7 +278,7 @@ onMounted(() => {
 
 .card-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -290,7 +287,7 @@ onMounted(() => {
 .card-header h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #1e2a3a;
+  color: var(--color-text);
 }
 
 .card-body {
@@ -306,14 +303,14 @@ onMounted(() => {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text);
 }
 
 input[type="text"],
 textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
   resize: vertical;
@@ -322,8 +319,8 @@ textarea {
 input[type="text"]:focus,
 textarea:focus {
   outline: none;
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 3px rgba(74,158,255,0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(92,169,106,0.14);
 }
 
 .btn-primary {
@@ -331,7 +328,7 @@ textarea:focus {
   padding: 12px;
   border: none;
   border-radius: 8px;
-  background: #1e2a3a;
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -340,12 +337,12 @@ textarea:focus {
 }
 
 .btn-primary:hover {
-  background: #2d3f54;
+  filter: brightness(1.02);
 }
 
 .count-badge {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -362,7 +359,7 @@ table {
 }
 
 thead {
-  background: #f9fafb;
+  background: var(--color-surface-soft);
 }
 
 th {
@@ -370,8 +367,8 @@ th {
   padding: 14px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
 }
 
 td {
@@ -381,12 +378,12 @@ td {
 }
 
 tbody tr:hover {
-  background: #f9fafb;
+  background: var(--color-surface-soft);
 }
 
 .type-badge {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
   padding: 4px 8px;
   border-radius: 999px;
   font-size: 12px;
@@ -402,9 +399,9 @@ tbody tr:hover {
 .selected-list li {
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--color-surface-soft);
   margin-bottom: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 input[type="checkbox"] {

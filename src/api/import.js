@@ -2,7 +2,8 @@ import axios from 'axios'
 import { api, initLegacySession } from './glpi'
 
 const LEGACY_URL = 'http://localhost:8081/apirest.php'
-const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
+//const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
+const APP_TOKEN = 'YYOqmp6AoAatgWk9EdRAEUGyMipVKtNpPn60ZbjT';
 
 const TYPES_SANS_MODELE = ['Cable', 'Socket', 'Appliance', 'Software', 'SoftwareLicense', 'Certificate']
 

@@ -1,11 +1,14 @@
 import axios from 'axios'
 
 const GLPI_URL = 'http://localhost:8081/api.php/v2'
-const CLIENT_ID = '8e5643c893eb080174bf7f11817f5ead61942c94a76d0f9fd57b42f19d1ee197'
-const CLIENT_SECRET = 'bb456712151222f6921b8ebf53266758ddf17150947cfc584d8a0818602858f6'
+//const CLIENT_ID = '8e5643c893eb080174bf7f11817f5ead61942c94a76d0f9fd57b42f19d1ee197'
+const CLIENT_ID = 'ff262e74a2eebc811e13f1f18fea80ed348ccb61dffbdcbfc0e779cff751ad69';
+//const CLIENT_SECRET = 'bb456712151222f6921b8ebf53266758ddf17150947cfc584d8a0818602858f6'
+const CLIENT_SECRET = '0b00f72edfb6ba2f95ec5e835d5c066f180eaf6b67e2504e7e083575662336a4';
 
 const LEGACY_URL = 'http://localhost:8081/apirest.php'
-const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
+//const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
+const APP_TOKEN = 'YYOqmp6AoAatgWk9EdRAEUGyMipVKtNpPn60ZbjT';
 
 export const api = axios.create({
   baseURL: GLPI_URL,
