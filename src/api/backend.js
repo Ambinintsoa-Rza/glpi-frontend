@@ -20,3 +20,8 @@ export const updateKanbanConfig = (statusId, config) => backend.put(`/kanban-con
 // Super coûts
 export const getSuperCouts = (ticketId) => backend.get(`/super-couts/${ticketId}`)
 export const creerSuperCout = (data) => backend.post('/super-couts', data)
+export const supprimerDernierSuperCout = (ticketId) => backend.delete(`/super-couts/dernier/${ticketId}`)
+
+//reouverture
+export const getCoutsReouverture = (ticketId) => backend.get(`/cout-reouverture/${ticketId}`)
+export const creerCoutReouverture = (data) => backend.post('/cout-reouverture', data)

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { getElements, api, getCoutTicket, getTicketsByItem, getItemsCountByTicket } from '@/api/glpi'
-import { getSuperCouts } from '@/api/backend'
+import { getSuperCouts, getCoutsReouverture } from '@/api/backend'
 
 const loading = ref(true)
 const lignes = ref([])
@@ -38,6 +38,7 @@ const charger = async () => {
       elements.map(async (el) => {
         let superCoutTotal = 0
         let coutTotal = 0
+        let coutReouvertureTotal = 0
 
         try {
           const itemTickets = await getTicketsByItem(el.type, el.id)
@@ -61,7 +62,15 @@ const charger = async () => {
               const { data } = await getSuperCouts(ticketId)
               const superCoutTicket = data.reduce((sum, sc) => sum + (parseFloat(sc.montant) || 0), 0)
               superCoutTotal += superCoutTicket / diviseur
-            } catch (e) { /* pas de super coûts */ }
+            } 
+            catch (e) { /* pas de super coûts */ }
+
+            try {
+                const { data } = await getCoutsReouverture(ticketId)
+                const coutReouvertureTicket = data.reduce((sum, cr) => sum + (parseFloat(cr.montant) || 0), 0)
+                coutReouvertureTotal += coutReouvertureTicket / diviseur
+            } catch (e) { /* pas de coûts réouverture */ }
+
           }
         } catch (e) {
           console.error(`Erreur pour ${el.type} ${el.id}:`, e)
@@ -71,7 +80,8 @@ const charger = async () => {
           ...el,
           superCout: superCoutTotal,
           coutTotal: coutTotal,
-          coutTotalAvecSuper: coutTotal + superCoutTotal
+          coutReouverture : coutReouvertureTotal,
+          coutTotalAvecSuper: coutTotal + superCoutTotal + coutReouvertureTotal
         }
       })
     )
@@ -88,10 +98,11 @@ const groupesParType = computed(() => {
   const parType = {}
   for (const ligne of lignes.value) {
     if (!parType[ligne.type]) {
-      parType[ligne.type] = { type: ligne.type, superCout: 0, coutTotal: 0, coutTotalAvecSuper: 0, nb: 0 }
+      parType[ligne.type] = { type: ligne.type, superCout: 0, coutTotal: 0, coutReouverture: 0, coutTotalAvecSuper: 0, nb: 0 }
     }
     parType[ligne.type].superCout += ligne.superCout
     parType[ligne.type].coutTotal += ligne.coutTotal
+    parType[ligne.type].coutReouverture += ligne.coutReouverture
     parType[ligne.type].coutTotalAvecSuper += ligne.coutTotalAvecSuper
     parType[ligne.type].nb += 1
   }
@@ -117,6 +128,7 @@ onMounted(charger)
             <th>Élément</th>
             <th>Super coût</th>
             <th>Coût total</th>
+            <th>Cout reouverture</th>
             <th>Coût total + super coûts</th>
           </tr>
         </thead>
@@ -128,6 +140,7 @@ onMounted(charger)
             </td>
             <td>{{ ligne.superCout.toFixed(2) }} €</td>
             <td>{{ ligne.coutTotal.toFixed(2) }} €</td>
+            <td>{{ ligne.coutReouverture.toFixed(2) }} €</td>
             <td><strong>{{ ligne.coutTotalAvecSuper.toFixed(2) }} €</strong></td>
           </tr>
           <tr v-if="lignes.length === 0">
@@ -147,6 +160,7 @@ onMounted(charger)
             <th>Nb éléments</th>
             <th>Super coût</th>
             <th>Coût total</th>
+            <th>Cout reouverture</th>
             <th>Coût total + super coûts</th>
           </tr>
         </thead>
@@ -156,6 +170,7 @@ onMounted(charger)
             <td>{{ groupe.nb }}</td>
             <td>{{ groupe.superCout.toFixed(2) }} €</td>
             <td>{{ groupe.coutTotal.toFixed(2) }} €</td>
+            <td>{{ groupe.coutReouverture.toFixed(2) }} €</td>
             <td><strong>{{ groupe.coutTotalAvecSuper.toFixed(2) }} €</strong></td>
           </tr>
         </tbody>

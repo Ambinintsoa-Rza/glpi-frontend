@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api } from '@/api/glpi'
-import { getKanbanConfig, getSuperCouts, creerSuperCout } from '@/api/backend'
+import { getKanbanConfig, getSuperCouts, creerSuperCout, supprimerDernierSuperCout, creerCoutReouverture } from '@/api/backend'
 
 const tickets = ref([])
 const loading = ref(true)
@@ -13,6 +13,16 @@ const loadingCouts = ref(false)
 const superCoutMontant = ref('')
 const superCoutCommentaire = ref('')
 const superCoutsTicket = ref([])
+const supprimerSuperCout = ref(false)
+
+//reouverture
+const pourcentageReouverture = ref('')
+const dernierSuperCout = ref(null)
+
+const montantReouverture = computed(() => {
+  if (!dernierSuperCout.value || !pourcentageReouverture.value) return 0
+  return (parseFloat(dernierSuperCout.value.montant) || 0) * (parseFloat(pourcentageReouverture.value) || 0) / 100
+})
 
 // Dialog création
 const showCreateDialog = ref(false)
@@ -73,7 +83,7 @@ const onDragStart = (ticket) => {
   ticketDragged.value = ticket
 }
 
-const onDrop = (colonne) => {
+const onDrop = async (colonne) => {
   if (!ticketDragged.value) return
   if (ticketDragged.value.status.id === colonne.statusId) return
 
@@ -82,6 +92,20 @@ const onDrop = (colonne) => {
   commentaireResolution.value = ''
   superCoutMontant.value = ''
   superCoutCommentaire.value = ''
+  supprimerSuperCout.value = false
+  pourcentageReouverture.value = ''
+  dernierSuperCout.value = null
+
+    // Si on quitte "Terminé", charger le dernier super coût pour le calcul du % réouverture
+  if (ticketDragged.value.status.id === 6 && colonne.statusId !== 6) {
+    try {
+      const { data } = await getSuperCouts(ticketDragged.value.id)
+      if (data.length > 0) {
+        dernierSuperCout.value = data[data.length - 1] // le plus récent
+      }
+    } catch(e) { console.error(e) }
+  }
+
   showStatusDialog.value = true
   ticketDragged.value = null
 }
@@ -96,7 +120,6 @@ const confirmerChangementStatut = async () => {
       solution: commentaireResolution.value || null
     })
 
-    // Enregistrer le super coût si statut "Terminé" et montant renseigné
     if (nouveauStatut.value.statusId === 6 && superCoutMontant.value) {
       await creerSuperCout({
         ticketId: ticketEnDeplacement.value.id,
@@ -105,11 +128,28 @@ const confirmerChangementStatut = async () => {
       })
     }
 
+    if (ticketEnDeplacement.value.status.id === 6 && nouveauStatut.value.statusId !== 6) {
+      if (supprimerSuperCout.value) {
+        await supprimerDernierSuperCout(ticketEnDeplacement.value.id)
+      }
+
+      if (pourcentageReouverture.value && dernierSuperCout.value) {
+        await creerCoutReouverture({
+          ticketId: ticketEnDeplacement.value.id,
+          pourcentage: parseFloat(pourcentageReouverture.value),
+          montant: montantReouverture.value
+        })
+      }
+    }
+
     await listeTicket()
     showStatusDialog.value = false
     technicienSelectionne.value = ''
     superCoutMontant.value = ''
     superCoutCommentaire.value = ''
+    supprimerSuperCout.value = false
+    pourcentageReouverture.value = ''
+    dernierSuperCout.value = null
   } catch(e) {
     console.error(e)
   }
@@ -406,6 +446,23 @@ elementsDisponibles.value = resultats
   <label>💎 Super coût (optionnel)</label>
   <input v-model="superCoutMontant" type="number" step="0.01" placeholder="Montant en €" />
   <input v-model="superCoutCommentaire" type="text" placeholder="Commentaire (optionnel)" style="margin-top: 8px" />
+</div>
+
+<!-- Option suppression super coût si on quitte "Terminé" -->
+<div v-if="ticketEnDeplacement?.status.id === 6 && nouveauStatut?.statusId !== 6" class="form-group" style="margin-top: 16px">
+  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
+    <input type="checkbox" v-model="supprimerSuperCout" />
+    🗑️ Supprimer le dernier super coût enregistré pour ce ticket
+  </label>
+</div>
+
+<!-- Coût de réouverture -->
+<div v-if="ticketEnDeplacement?.status.id === 6 && nouveauStatut?.statusId !== 6 && dernierSuperCout" class="form-group" style="margin-top: 16px">
+  <label>🔁 Pourcentage de coût de réouverture (basé sur le dernier super coût : {{ dernierSuperCout.montant }}€)</label>
+  <input v-model="pourcentageReouverture" type="number" step="0.01" placeholder="Ex: 10 pour 10%" />
+  <p v-if="pourcentageReouverture" style="margin-top: 6px; font-size: 13px; color: #6b7280">
+    = {{ montantReouverture.toFixed(2) }} €
+  </p>
 </div>
     </div>
     <div class="dialog-footer">
