@@ -78,7 +78,7 @@ const routes = [
     component : BackView
   },
   {
-    path : '/Detail',
+    path : '/Front/Detail',
     component : DetailView
   }
 ]

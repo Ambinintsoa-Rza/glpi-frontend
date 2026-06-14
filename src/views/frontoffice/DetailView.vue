@@ -42,6 +42,7 @@ const charger = async () => {
 
         try {
           const itemTickets = await getTicketsByItem(el.type, el.id)
+          console.log(itemTickets)
 
           for (const it of itemTickets) {
             const ticketId = it.tickets_id
@@ -120,7 +121,7 @@ onMounted(charger)
     </div>
 
     <div v-if="loading" class="loading">Chargement...</div>
-
+<!-- 
     <div v-else class="card">
       <table class="table">
         <thead>
@@ -148,7 +149,7 @@ onMounted(charger)
           </tr>
         </tbody>
       </table>
-    </div>
+    </div> -->
   </div>
 
   <!-- Tableau regroupé par type -->
