@@ -216,3 +216,11 @@ export const getItemsCountByTicket = async (ticketId) => {
   )
   return response.data?.length || 0
 }
+
+// Récupérer les éléments associés à un ticket (itemtype + items_id)
+export const getItemsByTicket = async (ticketId) => {
+  const sessionToken = await initLegacySession()
+  const headers = { 'Session-Token': sessionToken, 'App-Token': APP_TOKEN }
+  const response = await axios.get(`${LEGACY_URL}/Ticket/${ticketId}/Item_Ticket`, { headers })
+  return response.data || []
+}

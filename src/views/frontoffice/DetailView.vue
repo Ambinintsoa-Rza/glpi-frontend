@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { getElements, api, getCoutTicket, getTicketsByItem, getItemsCountByTicket } from '@/api/glpi'
-import { getSuperCouts, getCoutsReouverture } from '@/api/backend'
+import { getCoutsByItem } from '@/api/backend'
 
 const loading = ref(true)
 const lignes = ref([])
@@ -19,7 +19,6 @@ const calculerCoutTicket = (couts) => {
 const charger = async () => {
   loading.value = true
   try {
-    // 1. Récupérer tous les éléments Computer/Monitor/Phone
     const types = await getElements()
     const resultats = await Promise.all(
       types.map(async (type) => {
@@ -33,56 +32,44 @@ const charger = async () => {
     )
     const elements = resultats.flat().filter(el => ['Computer', 'Monitor', 'Phone'].includes(el.type))
 
-    // 2. Pour chaque élément, récupérer ses tickets associés et calculer les coûts
     const resultatsFinaux = await Promise.all(
       elements.map(async (el) => {
-        let superCoutTotal = 0
         let coutTotal = 0
-        let coutReouvertureTotal = 0
+        let superCout = 0
+        let coutReouverture = 0
 
+        // Coût GLPI (live, via tickets associés)
         try {
           const itemTickets = await getTicketsByItem(el.type, el.id)
-          console.log(itemTickets)
-
           for (const it of itemTickets) {
             const ticketId = it.tickets_id
-
-            // Nombre total d'éléments associés à ce ticket (pour la division)
             const nbElements = await getItemsCountByTicket(ticketId)
             const diviseur = nbElements > 0 ? nbElements : 1
 
-            // Coûts GLPI (temps + fixe)
             try {
               const couts = await getCoutTicket(ticketId)
-              const coutTicket = calculerCoutTicket(couts)
-              coutTotal += coutTicket / diviseur
+              coutTotal += calculerCoutTicket(couts) / diviseur
             } catch (e) { /* pas de coûts */ }
-
-            // Super coûts
-            try {
-              const { data } = await getSuperCouts(ticketId)
-              const superCoutTicket = data.reduce((sum, sc) => sum + (parseFloat(sc.montant) || 0), 0)
-              superCoutTotal += superCoutTicket / diviseur
-            } 
-            catch (e) { /* pas de super coûts */ }
-
-            try {
-                const { data } = await getCoutsReouverture(ticketId)
-                const coutReouvertureTicket = data.reduce((sum, cr) => sum + (parseFloat(cr.montant) || 0), 0)
-                coutReouvertureTotal += coutReouvertureTicket / diviseur
-            } catch (e) { /* pas de coûts réouverture */ }
-
           }
         } catch (e) {
-          console.error(`Erreur pour ${el.type} ${el.id}:`, e)
+          console.error(`Erreur GLPI pour ${el.type} ${el.id}:`, e)
+        }
+
+        // Super coût et réouverture (table "cout" SQLite, déjà répartis par item)
+        try {
+          const { data } = await getCoutsByItem(el.type, el.id)
+          superCout = data.filter(c => c.typeCout === 'supercout').reduce((s, c) => s + c.montant, 0)
+          coutReouverture = data.filter(c => c.typeCout === 'reouverture').reduce((s, c) => s + c.montant, 0)
+        } catch (e) {
+          console.error(`Erreur couts pour ${el.type} ${el.id}:`, e)
         }
 
         return {
           ...el,
-          superCout: superCoutTotal,
-          coutTotal: coutTotal,
-          coutReouverture : coutReouvertureTotal,
-          coutTotalAvecSuper: coutTotal + superCoutTotal + coutReouvertureTotal
+          superCout,
+          coutTotal,
+          coutReouverture,
+          coutTotalAvecSuper: coutTotal + superCout + coutReouverture
         }
       })
     )
