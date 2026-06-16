@@ -1,6 +1,12 @@
 import { trouverTicketParRef } from '@/api/import'
-import { getItemsByTicket } from '@/api/glpi'
+import { getItemsByTicket, changerStatutTicket } from '@/api/glpi'
 import { creerCouts, getDernierCout, supprimerDernierCout } from '@/api/backend'
+
+const STATUS = {
+  NEW: 1,
+  PROGRESS: 2,
+  CLOSED: 6
+}
 
 export async function traiterMouvement(ref, mouvement, valeurRaw) {
 
@@ -17,6 +23,8 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
 
   // CLOSE
   if (mouvementNormalise === 'close') {
+
+    await changerStatutTicket(ticketId, STATUS.CLOSED)
 
     if (isNaN(valeur)) {
       throw new Error(`Valeur invalide pour close`)
@@ -53,6 +61,8 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
 
   // OPEN
   if (mouvementNormalise === 'open') {
+
+    await changerStatutTicket(ticketId, STATUS.PROGRESS)
 
     if (isNaN(valeur)) {
       throw new Error(`Valeur invalide pour open`)
@@ -111,6 +121,9 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
     }
 
     await supprimerDernierCout(ticketId, 'supercout')
+
+      // 3. Remettre le statut en PROGRESS
+    await changerStatutTicket(ticketId, 2)
 
     return `Ticket [${ref}] : dernier super coût annulé`
   }
