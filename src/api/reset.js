@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { api, initLegacySession } from './glpi'
+import { reinitialiserSqlite } from './backend'
 
 const LEGACY_URL = 'http://localhost:8081/apirest.php'
 const APP_TOKEN = 'GS8GfXrlMOZqTgwRS6BmK644RZmJev2hTi9rGYxp'
@@ -90,5 +91,18 @@ export const reinitialiserDonnees = async (onLog) => {
     }
   } catch(e) {
     onLog?.(`Erreur suppression users: ${e.message}`, 'error')
+  }
+
+    // Réinitialisation SQLite
+  try {
+
+    await reinitialiserSqlite()
+
+    onLog?.('✓ Base SQLite réinitialisée', 'success')
+
+  } catch (e) {
+
+    onLog?.(`Erreur SQLite : ${e.message}`, 'error')
+
   }
 }

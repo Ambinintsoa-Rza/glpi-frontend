@@ -31,3 +31,7 @@ export const getCoutsByTicket = (ticketId) => backend.get(`/couts/ticket/${ticke
 export const getCoutsByItem = (itemType, itemId) => backend.get(`/couts/item/${itemType}/${itemId}`)
 export const getDernierCout = (ticketId, typeCout) => backend.get(`/couts/dernier/${ticketId}/${typeCout}`)
 export const supprimerDernierCout = (ticketId, typeCout) => backend.delete(`/couts/dernier/${ticketId}/${typeCout}`)
+
+export const reinitialiserSqlite = () => {
+  return axios.delete('http://localhost:8090/api/couts/reset-sqlite')
+}

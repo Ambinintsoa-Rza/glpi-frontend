@@ -6,6 +6,20 @@ import { getCoutsByItem } from '@/api/backend'
 const loading = ref(true)
 const lignes = ref([])
 
+const typeSelectionne = ref(null)
+
+const afficherDetails = (type) => {
+  typeSelectionne.value = type
+}
+
+const detailsType = computed(() => {
+  if (!typeSelectionne.value) return []
+
+  return lignes.value.filter(
+    ligne => ligne.type === typeSelectionne.value
+  )
+})
+
 const calculerCoutTicket = (couts) => {
   return couts.reduce((total, cout) => {
     const tauxHoraire = parseFloat(cout.cost_time) || 0
@@ -41,6 +55,7 @@ const charger = async () => {
         // Coût GLPI (live, via tickets associés)
         try {
           const itemTickets = await getTicketsByItem(el.type, el.id)
+          console.log(itemTickets)
           for (const it of itemTickets) {
             const ticketId = it.tickets_id
             const nbElements = await getItemsCountByTicket(ticketId)
@@ -153,7 +168,9 @@ onMounted(charger)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="groupe in groupesParType" :key="groupe.type">
+          <tr v-for="groupe in groupesParType" :key="groupe.type"
+          @click="afficherDetails(groupe.type)"
+          style="cursor:pointer">
             <td><span class="type-badge">{{ groupe.type }}</span></td>
             <td>{{ groupe.nb }}</td>
             <td>{{ groupe.superCout.toFixed(2) }} €</td>
@@ -164,6 +181,45 @@ onMounted(charger)
         </tbody>
       </table>
     </div>
+
+    <div
+  v-if="typeSelectionne"
+  class="card"
+  style="margin-top:16px"
+>
+  <div style="padding:12px">
+    <h3>Détails {{ typeSelectionne }}</h3>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Super coût</th>
+        <th>Coût total</th>
+        <th>Coût réouverture</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr
+        v-for="ligne in detailsType"
+        :key="`${ligne.type}-${ligne.id}`"
+      >
+        <td>{{ ligne.name }}</td>
+        <td>{{ ligne.superCout.toFixed(2) }} €</td>
+        <td>{{ ligne.coutTotal.toFixed(2) }} €</td>
+        <td>{{ ligne.coutReouverture.toFixed(2) }} €</td>
+        <td>
+          <strong>
+            {{ ligne.coutTotalAvecSuper.toFixed(2) }} €
+          </strong>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 </template>
 
 <style scoped>

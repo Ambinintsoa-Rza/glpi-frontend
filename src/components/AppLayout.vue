@@ -48,9 +48,9 @@ const logout = () => {
         <router-link to="/Kanban/parametre" class="nav-item">
           <span>⚙️</span>Paramètres Kanban
         </router-link>
-        <!-- <router-link to="/Back" class="nav-item">
-          <span>🗄️</span> Backend SQLite
-        </router-link> -->
+        <router-link to="/ImportSQLite" class="nav-item">
+          <span>🗄️</span> Import SQLite
+        </router-link>
       </nav>
 
       <div class="sidebar-footer">

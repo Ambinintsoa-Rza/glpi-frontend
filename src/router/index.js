@@ -11,6 +11,7 @@ import BackView from '@/views/backend/BackView.vue'
 import TicketKanbanView from '@/views/frontoffice/TicketKanbanView.vue'
 import ParametresKanban from '@/views/frontoffice/ParametresKanban.vue'
 import DetailView from '@/views/frontoffice/DetailView.vue'
+import ImportSQLite from '@/views/ImportSQLite.vue'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -80,6 +81,11 @@ const routes = [
   {
     path : '/Front/Detail',
     component : DetailView
+  },
+  {
+    path : '/ImportSQLite',
+    component : ImportSQLite,
+    meta : {requiresAuth:true}
   }
 ]
 
