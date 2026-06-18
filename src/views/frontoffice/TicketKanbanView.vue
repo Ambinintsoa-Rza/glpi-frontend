@@ -1,13 +1,15 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api, getItemsByTicket } from '@/api/glpi'
-import { getKanbanConfig, creerCouts, getCoutsByTicket, getDernierCout, supprimerDernierCout } from '@/api/backend'
+import { getKanbanConfig, creerCouts, getCoutsByTicket, getDernierCout, supprimerDernierCout, getTousCouts } from '@/api/backend'
+import { calculerBaseReouverture, MODE_LABELS } from '@/api/coutsService'
 
 const tickets = ref([])
 const loading = ref(true)
 const ticketSelectionne = ref(null)
 const coutsTicket = ref([])
 const loadingCouts = ref(false)
+const modeReouverture = ref(1)
 
 // // Nouveau ref
 // const superCoutMontant = ref('')
@@ -31,10 +33,10 @@ const coutsBackend = ref([]) // toutes les lignes "cout" du ticket sélectionné
 const superCoutsAffiches = computed(() => coutsBackend.value.filter(c => c.typeCout === 'supercout'))
 const reouvertureAffiches = computed(() => coutsBackend.value.filter(c => c.typeCout === 'reouverture'))
 
-const montantReouverture = computed(() => {
-  if (dernierSuperCout.value === null || !pourcentageReouverture.value) return 0
-  return dernierSuperCout.value * (parseFloat(pourcentageReouverture.value) || 0) / 100
-})
+// const montantReouverture = computed(() => {
+//   if (dernierSuperCout.value === null || !pourcentageReouverture.value) return 0
+//   return dernierSuperCout.value * (parseFloat(pourcentageReouverture.value) || 0) / 100
+// })
 
 
 // Dialog création
@@ -108,12 +110,22 @@ const onDrop = async (colonne) => {
   supprimerSuperCout.value = false
   pourcentageReouverture.value = ''
   dernierSuperCout.value = null
+  modeReouverture.value = 1
 
-  if (ticketDragged.value.status.id === 6 && colonne.statusId !== 6) {
+  // if (ticketDragged.value.status.id === 6 && colonne.statusId !== 6) {
+  //   try {
+  //     const { data } = await getDernierCout(ticketDragged.value.id, 'supercout')
+  //     if (data.length > 0) {
+  //       dernierSuperCout.value = data.reduce((s, c) => s + c.montant, 0)
+  //     }
+  //   } catch(e) { console.error(e) }
+  // }
+
+    if (ticketDragged.value.status.id === 6 && colonne.statusId !== 6) {
     try {
-      const { data } = await getDernierCout(ticketDragged.value.id, 'supercout')
+      const { data } = await getTousCouts(ticketDragged.value.id, 'supercout')
       if (data.length > 0) {
-        dernierSuperCout.value = data.reduce((s, c) => s + c.montant, 0)
+        dernierSuperCout.value = data.length > 0 ? true : null  
       }
     } catch(e) { console.error(e) }
   }
@@ -149,6 +161,7 @@ const confirmerChangementStatut = async () => {
             itemType: it.itemtype,
             itemId: it.items_id,
             groupe,
+            mode:null,
             commentaire: superCoutCommentaire.value || null
           }))
         : [{
@@ -171,10 +184,16 @@ const confirmerChangementStatut = async () => {
       }
 
       if (pourcentageReouverture.value && dernierSuperCout.value !== null) {
+        const base = await calculerBaseReouverture(ticketId, modeReouverture.value)
+        console.log(modeReouverture.value)
+        const montantReouverture = (base * parseFloat(pourcentageReouverture.value)) / 100
+        console.log(montantReouverture)
+
         const items = await getItemsByTicket(ticketId)
         const nb = items.length || 1
         const groupe = new Date().toISOString()
-        const montantParItem = montantReouverture.value / nb
+
+        const montantParItem = montantReouverture / nb
 
         const couts = items.length > 0
           ? items.map(it => ({
@@ -183,15 +202,17 @@ const confirmerChangementStatut = async () => {
               montant: montantParItem,
               itemType: it.itemtype,
               itemId: it.items_id,
-              groupe
+              groupe,
+              mode: modeReouverture.value
             }))
           : [{
               ticketId,
               typeCout: 'reouverture',
-              montant: montantReouverture.value,
+              montant: montantReouverture,
               itemType: null,
               itemId: null,
-              groupe
+              groupe,
+              mode: modeReouverture.value
             }]
 
         await creerCouts(couts)
@@ -535,11 +556,14 @@ elementsDisponibles.value = resultats
 
 <!-- Coût de réouverture -->
 <div v-if="ticketEnDeplacement?.status.id === 6 && nouveauStatut?.statusId !== 6 && dernierSuperCout !== null" class="form-group" style="margin-top: 16px">
-  <label>🔁 Pourcentage de coût de réouverture (basé sur le dernier super coût : {{ dernierSuperCout.toFixed(2) }}€)</label>
+  <label>🔁 Pourcentage de coût de réouverture</label>
+  <select v-model="modeReouverture">
+    <option v-for="(label, val) in MODE_LABELS" :key="val" :value="parseInt(val)">
+      mode {{ val }} - {{ label }}
+    </option>
+  </select>
   <input v-model="pourcentageReouverture" type="number" step="0.01" placeholder="Ex: 10 pour 10%" />
-  <p v-if="pourcentageReouverture" style="margin-top: 6px; font-size: 13px; color: #6b7280">
-    = {{ montantReouverture.toFixed(2) }} €
-  </p>
+
 </div>
     </div>
     <div class="dialog-footer">

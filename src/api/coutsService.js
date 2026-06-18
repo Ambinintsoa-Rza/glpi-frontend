@@ -1,14 +1,64 @@
 import { trouverTicketParRef } from '@/api/import'
 import { getItemsByTicket, changerStatutTicket } from '@/api/glpi'
-import { creerCouts, getDernierCout, supprimerDernierCout } from '@/api/backend'
+import { creerCouts, getDernierCout, supprimerDernierCout, getPremierCout, getTousCouts } from '@/api/backend'
 
 const STATUS = {
   NEW: 1,
   PROGRESS: 2,
   CLOSED: 6
+}   
+
+export const MODE_LABELS = {
+    1: 'dernier supercout',
+    2: 'premier supercout',
+    3: 'moyenne supercout',
+    4: 'somme supercout'
 }
 
-export async function traiterMouvement(ref, mouvement, valeurRaw) {
+export async function calculerBaseReouverture(ticketId, mode) {
+    const modeNum =parseInt(mode) || 1
+
+    if(modeNum === 1)
+    {
+        const {data} = await getDernierCout(ticketId, 'supercout')
+        if(data.length === 0) throw new Error ('aucun supercout existant')
+        return data.reduce((s,c) => s + c.montant, 0)
+    }
+
+        if(modeNum === 2)
+    {
+        const {data} = await getPremierCout(ticketId, 'supercout')
+        if(data.length === 0) throw new Error ('aucun supercout existant')
+        return data.reduce((s,c) => s + c.montant, 0)
+    }
+
+        if(modeNum === 3)
+    {
+        const {data} = await getTousCouts(ticketId, 'supercout')
+        if(data.length === 0) throw new Error ('aucun supercout existant')
+
+        const parGroupe = {}
+        for(const c of data) {
+            parGroupe[c.groupe] = (parGroupe[c.groupe] || 0) + c.montant
+        }
+        const totaux = Object.values(parGroupe)
+        return totaux.reduce((s,v) => s + v, 0) / totaux.length
+    }
+
+        if(modeNum === 4)
+    {
+        const {data} = await getTousCouts(ticketId, 'supercout')
+        if(data.length === 0) throw new Error ('aucun supercout existant')
+
+        const parGroupe = {}
+        for(const c of data) {
+            parGroupe[c.groupe] = (parGroupe[c.groupe] || 0) + c.montant
+        }
+        return Object.values(parGroupe).reduce((s,v) => s + v, 0)
+    }
+}
+
+export async function traiterMouvement(ref, mouvement, valeurRaw, mode) {
 
   const mouvementNormalise = mouvement.trim().toLowerCase()
   const valeur = parseFloat(String(valeurRaw).replace(',', '.'))
@@ -43,7 +93,8 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
           montant: montantParItem,
           itemType: it.itemtype,
           itemId: it.items_id,
-          groupe
+          groupe,
+          mode: null
         }))
       : [{
           ticketId,
@@ -51,7 +102,8 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
           montant: valeur,
           itemType: null,
           itemId: null,
-          groupe
+          groupe,
+          mode : null
         }]
 
     await creerCouts(couts)
@@ -59,56 +111,31 @@ export async function traiterMouvement(ref, mouvement, valeurRaw) {
     return `Ticket [${ref}] : super coût ${valeur}€ enregistré`
   }
 
-  // OPEN
-  if (mouvementNormalise === 'open') {
+// OPEN — remplacer le calcul manuel par calculerBaseReouverture
+if (mouvementNormalise === 'open') {
+  await changerStatutTicket(ticketId, STATUS.PROGRESS)
+  if (isNaN(valeur)) throw new Error('Valeur invalide pour open')
 
-    await changerStatutTicket(ticketId, STATUS.PROGRESS)
+  const base = await calculerBaseReouverture(ticketId, mode)  // ← utilise le mode
+  const montantReouverture = base * valeur / 100
 
-    if (isNaN(valeur)) {
-      throw new Error(`Valeur invalide pour open`)
-    }
+  const items = await getItemsByTicket(ticketId)
+  const nb = items.length || 1
+  const groupe = new Date().toISOString()
+  const montantParItem = montantReouverture / nb
 
-    const { data: dernierData } =
-      await getDernierCout(ticketId, 'supercout')
+  const couts = items.length > 0
+    ? items.map(it => ({
+        ticketId, typeCout: 'reouverture',
+        montant: montantParItem,
+        itemType: it.itemtype, itemId: it.items_id,
+        groupe, mode: parseInt(mode)
+      }))
+    : [{ ticketId, typeCout: 'reouverture', montant: montantReouverture, itemType: null, itemId: null, groupe, mode: parseInt(mode) }]
 
-    if (dernierData.length === 0) {
-      throw new Error(`Aucun super coût existant`)
-    }
-
-    const totalDernierSuperCout =
-      dernierData.reduce((s, c) => s + c.montant, 0)
-
-    const montantReouverture =
-      totalDernierSuperCout * valeur / 100
-
-    const items = await getItemsByTicket(ticketId)
-
-    const nb = items.length || 1
-    const groupe = new Date().toISOString()
-    const montantParItem = montantReouverture / nb
-
-    const couts = items.length > 0
-      ? items.map(it => ({
-          ticketId,
-          typeCout: 'reouverture',
-          montant: montantParItem,
-          itemType: it.itemtype,
-          itemId: it.items_id,
-          groupe
-        }))
-      : [{
-          ticketId,
-          typeCout: 'reouverture',
-          montant: montantReouverture,
-          itemType: null,
-          itemId: null,
-          groupe
-        }]
-
-    await creerCouts(couts)
-
-    return `Ticket [${ref}] : réouverture ${valeur}%`
-  }
+  await creerCouts(couts)
+  return `Ticket [${ref}] : réouverture ${valeur}% de ${base.toFixed(2)}€ (mode ${mode}) = ${montantReouverture.toFixed(2)}€`
+}
 
   // CANCEL
   if (mouvementNormalise === 'cancel') {

@@ -12,10 +12,11 @@ const logs = ref([])
 const message = ref('')
 const messageType = ref('')
 
+
 const addLog = (text, type = 'info') => logs.value.push({ text, type })
 
 const parseCsv = (file) => new Promise((resolve) => {
-  Papa.parse(file, { header: true, delimiter: '', skipEmptyLines: true, complete: (r) => resolve(r.data) })
+  Papa.parse(file, { header: true, delimiter: ';', skipEmptyLines: true, complete: (r) => resolve(r.data) })
 })
 
 const importer = async () => {
@@ -38,13 +39,15 @@ for (const ligne of lignes) {
   const ref = ligne.Ticket || ligne.ticket
   const mouvement = ligne.Mouvement || ligne.mouvement
   const valeurRaw = ligne.Valeur ?? ligne.valeur
+  const mode = parseInt(ligne.Mode || ligne.mode)
 
   try {
 
     const resultat = await traiterMouvement(
       ref,
       mouvement,
-      valeurRaw
+      valeurRaw,
+      mode
     )
 
     addLog(resultat, 'success')
@@ -96,7 +99,7 @@ for (const ligne of lignes) {
 
         <div class="file-field">
           <div class="file-input-wrapper">
-            <input type="file" accept=".csv" @change="fichier = $event.target.files[0]" id="couts-file" class="file-input" />
+            <input type="file" accept=".csv,.txt" @change="fichier = $event.target.files[0]" id="couts-file" class="file-input" />
             <label for="couts-file" class="file-label">
               {{ fichier ? fichier.name : 'Choisir un fichier CSV' }}
             </label>
