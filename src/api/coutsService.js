@@ -157,3 +157,77 @@ if (mouvementNormalise === 'open') {
 
   throw new Error(`Mouvement inconnu : ${mouvement}`)
 }
+
+export async function traiterCloture(ticketId, montant, commentaire) {
+    if(!montant) return
+
+    const items = await getItemsByTicket(ticketId)
+    const nb = items.length || 1
+    const groupe = new Date().toISOString()
+    const montantParItem = parseFloat(montant) / nb
+
+    const couts = items.length > 0
+        ? items.map(it => ({
+            ticketId,
+            typeCout:'supercout',
+            montant: montantParItem,
+            itemType:it.itemtype, 
+            itemId: it.items_id,
+            groupe,
+            mode: null,
+            commentaire: commentaire || null
+        }))
+        :[{
+            ticketId,
+            typeCout:'supercout',
+            montant: parseFloat(montant),
+            itemType:null, 
+            itemId: null,
+            groupe,
+            mode: null,
+            commentaire: commentaire || null
+        }]
+
+        await creerCouts(couts)
+        return `super cout ${montant} € enregistré`
+    
+}
+
+export async function traiterReouvertureKanban(ticketId, pourcentage, mode, supprimerDernier) {
+    if(supprimerDernier) {
+        await supprimerDernierCout(ticketId, 'supercout')
+    }
+
+    if(!pourcentage) return
+
+    const base = await calculerBaseReouverture(ticketId, mode)
+    const montantReouverture = base * parseFloat(pourcentage) / 100
+
+    const items = await getItemsByTicket(ticketId)
+    const nb = items.length || 1
+    const groupe = new Date().toISOString()
+    const montantParItem = montantReouverture / nb
+
+    const couts = items.length > 0
+            ? items.map(it => ({
+            ticketId,
+            typeCout:'reouverture',
+            montant: montantParItem,
+            itemType:it.itemtype, 
+            itemId: it.items_id,
+            groupe,
+            mode: parseInt(mode)
+        }))
+        :[{
+            ticketId,
+            typeCout:'reouverture',
+            montant: montantReouverture,
+            itemType:null, 
+            itemId: null,
+            groupe,
+            mode: parseInt(mode)
+        }]
+
+        await creerCouts(couts)
+        return `reouverture ${pourcentage} de ${base.toFixed(2)}€ = ${montantReouverture.toFixed(2)}€`
+}

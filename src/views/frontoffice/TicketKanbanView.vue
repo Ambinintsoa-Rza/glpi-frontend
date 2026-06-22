@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { getTickets, getCoutTicket, newTicket as creerTicket, getUsers, changerStatutTicket, getElements, associerElementTicket, api, getItemsByTicket } from '@/api/glpi'
 import { getKanbanConfig, creerCouts, getCoutsByTicket, getDernierCout, supprimerDernierCout, getTousCouts } from '@/api/backend'
-import { calculerBaseReouverture, MODE_LABELS } from '@/api/coutsService'
+import { calculerBaseReouverture, MODE_LABELS, traiterCloture, traiterReouvertureKanban } from '@/api/coutsService'
 
 const tickets = ref([])
 const loading = ref(true)
@@ -146,78 +146,87 @@ const confirmerChangementStatut = async () => {
 
     const ticketId = ticketEnDeplacement.value.id
 
-    // 1. Super coût si on clôture
-    if (nouveauStatut.value.statusId === 6 && superCoutMontant.value) {
-      const items = await getItemsByTicket(ticketId)
-      const nb = items.length || 1
-      const groupe = new Date().toISOString()
-      const montantParItem = parseFloat(superCoutMontant.value) / nb
+    // // 1. Super coût si on clôture
+    // if (nouveauStatut.value.statusId === 6 && superCoutMontant.value) {
+    //   const items = await getItemsByTicket(ticketId)
+    //   const nb = items.length || 1
+    //   const groupe = new Date().toISOString()
+    //   const montantParItem = parseFloat(superCoutMontant.value) / nb
 
-      const couts = items.length > 0
-        ? items.map(it => ({
-            ticketId,
-            typeCout: 'supercout',
-            montant: montantParItem,
-            itemType: it.itemtype,
-            itemId: it.items_id,
-            groupe,
-            mode:null,
-            commentaire: superCoutCommentaire.value || null
-          }))
-        : [{
-            ticketId,
-            typeCout: 'supercout',
-            montant: parseFloat(superCoutMontant.value),
-            itemType: null,
-            itemId: null,
-            groupe,
-            commentaire: superCoutCommentaire.value || null
-          }]
+    //   const couts = items.length > 0
+    //     ? items.map(it => ({
+    //         ticketId,
+    //         typeCout: 'supercout',
+    //         montant: montantParItem,
+    //         itemType: it.itemtype,
+    //         itemId: it.items_id,
+    //         groupe,
+    //         mode:null,
+    //         commentaire: superCoutCommentaire.value || null
+    //       }))
+    //     : [{
+    //         ticketId,
+    //         typeCout: 'supercout',
+    //         montant: parseFloat(superCoutMontant.value),
+    //         itemType: null,
+    //         itemId: null,
+    //         groupe,
+    //         commentaire: superCoutCommentaire.value || null
+    //       }]
 
-      await creerCouts(couts)
+    //   await creerCouts(couts)
+    // }
+
+    // // 2. Si on quitte "Terminé"
+    // if (ticketEnDeplacement.value.status.id === 6 && nouveauStatut.value.statusId !== 6) {
+    //   if (supprimerSuperCout.value) {
+    //     await supprimerDernierCout(ticketId, 'supercout')
+    //   }
+
+    //   if (pourcentageReouverture.value && dernierSuperCout.value !== null) {
+    //     const base = await calculerBaseReouverture(ticketId, modeReouverture.value)
+    //     console.log(modeReouverture.value)
+    //     const montantReouverture = (base * parseFloat(pourcentageReouverture.value)) / 100
+    //     console.log(montantReouverture)
+
+    //     const items = await getItemsByTicket(ticketId)
+    //     const nb = items.length || 1
+    //     const groupe = new Date().toISOString()
+
+    //     const montantParItem = montantReouverture / nb
+
+    //     const couts = items.length > 0
+    //       ? items.map(it => ({
+    //           ticketId,
+    //           typeCout: 'reouverture',
+    //           montant: montantParItem,
+    //           itemType: it.itemtype,
+    //           itemId: it.items_id,
+    //           groupe,
+    //           mode: modeReouverture.value
+    //         }))
+    //       : [{
+    //           ticketId,
+    //           typeCout: 'reouverture',
+    //           montant: montantReouverture,
+    //           itemType: null,
+    //           itemId: null,
+    //           groupe,
+    //           mode: modeReouverture.value
+    //         }]
+
+    //     await creerCouts(couts)
+    //   }
+    // }
+
+    if(nouveauStatut.value.statusId === 6) {
+      await traiterCloture(ticketId, superCoutMontant.value, superCoutCommentaire.value)
     }
 
-    // 2. Si on quitte "Terminé"
-    if (ticketEnDeplacement.value.status.id === 6 && nouveauStatut.value.statusId !== 6) {
-      if (supprimerSuperCout.value) {
-        await supprimerDernierCout(ticketId, 'supercout')
-      }
-
-      if (pourcentageReouverture.value && dernierSuperCout.value !== null) {
-        const base = await calculerBaseReouverture(ticketId, modeReouverture.value)
-        console.log(modeReouverture.value)
-        const montantReouverture = (base * parseFloat(pourcentageReouverture.value)) / 100
-        console.log(montantReouverture)
-
-        const items = await getItemsByTicket(ticketId)
-        const nb = items.length || 1
-        const groupe = new Date().toISOString()
-
-        const montantParItem = montantReouverture / nb
-
-        const couts = items.length > 0
-          ? items.map(it => ({
-              ticketId,
-              typeCout: 'reouverture',
-              montant: montantParItem,
-              itemType: it.itemtype,
-              itemId: it.items_id,
-              groupe,
-              mode: modeReouverture.value
-            }))
-          : [{
-              ticketId,
-              typeCout: 'reouverture',
-              montant: montantReouverture,
-              itemType: null,
-              itemId: null,
-              groupe,
-              mode: modeReouverture.value
-            }]
-
-        await creerCouts(couts)
-      }
+    if(ticketEnDeplacement.value.status.id === 6 && nouveauStatut.value.statusId !== 6) {
+      await traiterReouvertureKanban(ticketId, pourcentageReouverture.value, modeReouverture.value, supprimerSuperCout.value)
     }
+
 
     await listeTicket()
     showStatusDialog.value = false
